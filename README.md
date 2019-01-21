@@ -1,12 +1,12 @@
 # futhark-kdd19
 
-##Bfast Performance Evaluation
+## Bfast Performance Evaluation
 
 Folder `bfast-c` contains a OpenMP-parallelized CPU version of bfast; the code was carefully written to be in a good form for vectorization, but it is ultimately up to gcc to extract it, i.e., no vectorization intrinsics have been used. The datasets are generated internally.
 
 Folder `bfast-futhark` contain various bfast versions of the code written in Futhark. This includes individual computational kernels of bfast including batched-matrix-matrix multiplication and batched matrix inversion. Also datasets and means of generating datasets are provided. Details are as follows:
 
-## Futhark Code for BFast
+## (I) Futhark Code for BFast
 
 ### Datasets:
 
@@ -62,5 +62,5 @@ $ futhark bench --backend opencl --pass-option --default-tile-size=8 bmmm-blktil
 `$ FUTHARK_INCREMENTAL_FLATTENING=1 futhark bench --backend opencl --pass-option --size=main.suff_intra_par_1=1 matinv.fut`
 --- 
 
-## C+OpenMP Code for Bfast (Whole) Program
+## (II) C + OpenMP Code for Bfast (Whole) Program
 
