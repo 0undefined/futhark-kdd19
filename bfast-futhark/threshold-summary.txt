@@ -64,6 +64,8 @@ suff_intra_par_20 = 2048
 ### 4. Versions of "let beta : [m][2k+2]f32 = map2 matvecmul_row Xinv beta0"
 ####################################################################################
 
+PART BUG HERE FOR PERU (chosing outermost fixes it, if the other bug is fixed as well)
+
 if (suff_outer_par_28254 = suff_outer_par_21 < m) { => NO }
 else {
     if (intra_suff_and_fits_28335 = suff_intra_par_22 < k2p2) { => NO }
@@ -121,6 +123,8 @@ suff_intra_par_30 = 1
 ####################################################################################
 ### 7. Versions of "let (hs, nss, sigmas) = map2 (... redomap o redomap ...)"
 ####################################################################################
+
+PART BUG HERE FOR SAHARA (chosing outermost fixes it)
 
 if (suff_outer_par_29667 = suff_outer_par_33 < m ) { => NO }
 else {
