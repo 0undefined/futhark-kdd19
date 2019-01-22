@@ -237,8 +237,6 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     // 2. compute X and its transpose Xt
     mkX(N, K, data.freq, data.mappingindices, X, Xt);
 
-    printf("before mainloop\n\n\n");
-
 #if 1
         // this should really be allocated per thread
         real* Xsqr  = (real*)malloc(Ksq*sizeof(real));
@@ -251,6 +249,7 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
         real* MO = (real*)malloc((N-n)*sizeof(real));
 #endif
 
+    printf("before mainloop\n\n\n");
 
     for(int32_t i=0; i<M; i++) {
         real* Y = data.image + i*N;
@@ -323,6 +322,8 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
         free(MO);
 #endif
     }
+
+    printf("AFTER mainloop\n\n\n");
 
 #if 1        
         free(Xsqr);
