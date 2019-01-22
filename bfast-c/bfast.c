@@ -239,9 +239,8 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
 
     printf("before mainloop\n\n\n");
 
-    for(int32_t i=0; i<M; i++) {
-        real* Y = data.image + i*N;
-
+#if 1
+        // this should really be allocated per thread
         real* Xsqr  = (real*)malloc(Ksq*sizeof(real));
         real* Xinv1 = (real*)malloc(4*Ksq*sizeof(real));
         real* Xinv2 = Xinv1 + 2*Ksq;
@@ -250,7 +249,22 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
         real* y_error = (real*)malloc(N*sizeof(real));
         int32_t* val_ind = (int32_t*)malloc(N*sizeof(int32_t));
         real* MO = (real*)malloc((N-n)*sizeof(real));
+#endif
 
+
+    for(int32_t i=0; i<M; i++) {
+        real* Y = data.image + i*N;
+
+#if 0
+        real* Xsqr  = (real*)malloc(Ksq*sizeof(real));
+        real* Xinv1 = (real*)malloc(4*Ksq*sizeof(real));
+        real* Xinv2 = Xinv1 + 2*Ksq;
+        real* beta0 = (real*)malloc(2*K*sizeof(real));
+        real* beta  = beta0 + K;
+        real* y_error = (real*)malloc(N*sizeof(real));
+        int32_t* val_ind = (int32_t*)malloc(N*sizeof(int32_t));
+        real* MO = (real*)malloc((N-n)*sizeof(real));
+#endif
         batchMMM (M, N, n, K, Y, X, Xsqr);
         batchMinv(K, Xsqr, Xinv1, Xinv2); // the result is in Xsqr
         mm1(N, n, K, X, Y, beta0);        // the result is in beta0
@@ -300,14 +314,25 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
 
         fst_breaks[i] = fst_break;
         means[i] = mean;        
-        
+#if 0        
         free(Xsqr);
         free(Xinv1);
         free(beta0);
         free(y_error);
         free(val_ind);
         free(MO);
+#endif
     }
+
+#if 1        
+        free(Xsqr);
+        free(Xinv1);
+        free(beta0);
+        free(y_error);
+        free(val_ind);
+        free(MO);
+#endif
+
 
     free(BOUND);
     free(X);
