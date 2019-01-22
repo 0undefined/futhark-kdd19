@@ -265,10 +265,15 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
         real* MO = (real*)malloc((N-n)*sizeof(real));
 #endif
         batchMMM (M, N, n, K, Y, X, Xsqr);
+        printf("after batchmmm\n\n\n");
         batchMinv(K, Xsqr, Xinv1, Xinv2); // the result is in Xsqr
+        printf("after mm1\n\n\n");
         mm1(N, n, K, X, Y, beta0);        // the result is in beta0
+        printf("after mm1\n\n\n");
         mm2(K, Xsqr, beta0, beta);        // the result is in beta
+        printf("after mm2\n\n\n");
         mm3(N, K, Xt, beta, y_error);     // the result is in y_error
+        printf("after mm3\n\n\n");
 
         int32_t Ns = filterKer(N, Y, y_error, val_ind); // result in y_error (y_error) and val_ind
         HNnsSigma hnssig = sgmRedomap2Ker(n, K, data.hfrac, Y, y_error);
