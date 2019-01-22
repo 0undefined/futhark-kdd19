@@ -1,4 +1,4 @@
-#define RUNS_CPU 1
+#define RUNS_CPU 10
 
 #include "bfast.h"
 
@@ -75,7 +75,8 @@ inline void batchMMM(const int32_t M, const int32_t N, const int32_t n,
  * let Xinv = map mat_inv Xsqr
  * Result is in Xsqr! 
  */
-inline void batchMinv(const int32_t K, real* Xsqr, real* Xinv1, real* Xinv2) {
+inline void batchMinv(const int32_t K, real* Xsqr, real* Xinv11, real* Xinv22) {
+    real *Xinv1 = Xinv11, *Xinv2 = Xinv22;
     const int32_t K2 = 2*K;
     // init step
     for(int32_t i=0; i<K; i++) {
@@ -164,7 +165,7 @@ void mm3(const int32_t N, const int32_t K, real* Xt, real* beta, real* y_preds) 
         for(int32_t j=0; j<K; j++) {
             acc += Xt_row[j] * beta[j];
         }
-        beta[i] = acc;
+        y_preds[i] = acc;
     }
 }
 
@@ -213,8 +214,8 @@ HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, rea
     return res;
 }
 
-
-void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
+#define CHUNK 64
+void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     const int32_t M = data.M;
     const int32_t N = data.N;
     const int32_t n = data.n;
@@ -222,12 +223,7 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     const int32_t Ksq = K * K;
     const int32_t Npad = ((N + T_TILE - 1) / T_TILE) * T_TILE;
 
-    printf("before malloc BOUND %d %d %d\n\n\n", N-n, K, Npad);
-
     real* BOUND = (real*)malloc((N-n)*sizeof(real)); // [N-n]
-
-    printf("before malloc X\n\n\n");
-
     real* X = (real*)malloc(K*Npad*sizeof(real)); // [K,N]
     real* Xt= (real*)malloc(K*Npad*sizeof(real)); // [N,K]
 
@@ -237,8 +233,8 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     // 2. compute X and its transpose Xt
     mkX(N, K, data.freq, data.mappingindices, X, Xt);
 
-#if 1
-        // this should really be allocated per thread
+    #pragma omp parallel for
+    for(int32_t ii=0; ii<M; ii+=CHUNK) {
         real* Xsqr  = (real*)malloc(Ksq*sizeof(real));
         real* Xinv1 = (real*)malloc(4*Ksq*sizeof(real));
         real* Xinv2 = Xinv1 + 2*Ksq;
@@ -247,98 +243,68 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
         real* y_error = (real*)malloc(N*sizeof(real));
         int32_t* val_ind = (int32_t*)malloc(N*sizeof(int32_t));
         real* MO = (real*)malloc((N-n)*sizeof(real));
-#endif
 
-    printf("before mainloop\n\n\n");
+        for(int32_t i=ii; i<min(ii+CHUNK, M); i++) {
+            real* Y = data.image + i*N;
 
-    for(int32_t i=0; i<M; i++) {
-        real* Y = data.image + i*N;
+            batchMMM (M, N, n, K, Y, X, Xsqr);
+            batchMinv(K, Xsqr, Xinv1, Xinv2); // the result is in Xsqr
+            mm1(N, n, K, X, Y, beta0);        // the result is in beta0
+            mm2(K, Xsqr, beta0, beta);        // the result is in beta
+            mm3(N, K, Xt, beta, y_error);     // the result is in y_error
 
-#if 0
-        real* Xsqr  = (real*)malloc(Ksq*sizeof(real));
-        real* Xinv1 = (real*)malloc(4*Ksq*sizeof(real));
-        real* Xinv2 = Xinv1 + 2*Ksq;
-        real* beta0 = (real*)malloc(2*K*sizeof(real));
-        real* beta  = beta0 + K;
-        real* y_error = (real*)malloc(N*sizeof(real));
-        int32_t* val_ind = (int32_t*)malloc(N*sizeof(int32_t));
-        real* MO = (real*)malloc((N-n)*sizeof(real));
-#endif
-        batchMMM (M, N, n, K, Y, X, Xsqr);
-        printf("after batchmmm i = %d\n\n\n", i);
-        batchMinv(K, Xsqr, Xinv1, Xinv2); // the result is in Xsqr
-        printf("after mm1\n\n\n");
-        mm1(N, n, K, X, Y, beta0);        // the result is in beta0
-        printf("after mm1\n\n\n");
-        mm2(K, Xsqr, beta0, beta);        // the result is in beta
-        printf("after mm2\n\n\n");
-        mm3(N, K, Xt, beta, y_error);     // the result is in y_error
-        printf("after mm3\n\n\n");
+            int32_t Ns = filterKer(N, Y, y_error, val_ind); // result in y_error (y_error) and val_ind
+            HNnsSigma hnssig = sgmRedomap2Ker(n, K, data.hfrac, Y, y_error);
+            int32_t ns = hnssig.ns;
+            int32_t h  = hnssig.h;
+            real sigma = hnssig.sigma;
 
-        int32_t Ns = filterKer(N, Y, y_error, val_ind); // result in y_error (y_error) and val_ind
-        HNnsSigma hnssig = sgmRedomap2Ker(n, K, data.hfrac, Y, y_error);
-        int32_t ns = hnssig.ns;
-        int32_t h  = hnssig.h;
-        real sigma = hnssig.sigma;
-
-        real MO_fst = 0.0;
-        for(int32_t j=0; j<h; j++) {
-            MO_fst += y_error[j + ns - h + 1];
-        }
-        
-        real MO_acc = MO_fst;
-        for(int32_t j=0; j < Ns-ns; j++) {
-            MO_acc += (-y_error[ns-h+j] + y_error[ns+j]);
-            MO[j] = MO_acc;
-        }
-
-        real mean = 0.0;
-        int32_t is_break = 0;
-        int32_t fst_break = -1;
-        for(int32_t j=0; j < Ns-ns; j++) {
-            real b  = BOUND[j];
-            real mo = MO[j];
-            mo = mo / (sigma * sqrt((real)ns));
-            
-            if(is_break == 0) {
-                if( (!isnan(mo)) && (fabs(mo) > b) ) {
-                    is_break = 1;
-                    fst_break = j;
-                }
+            real MO_fst = 0.0;
+            for(int32_t j=0; j<h; j++) {
+                MO_fst += y_error[j + ns - h + 1];
             }
-            mean += mo;
-        }
+            
+            real MO_acc = MO_fst;
+            for(int32_t j=0; j < Ns-ns; j++) {
+                MO_acc += (-y_error[ns-h+j] + y_error[ns+j]);
+                MO[j] = MO_acc;
+            }
 
-        if(is_break) {
-            fst_break = (fst_break < Ns - ns) ? (val_ind[fst_break+ns] - n) : -1;
-        }
-        if ( (ns <= 5) || (Ns-ns <= 5) ) {
-            fst_break = -2;
-        }
+            real mean = 0.0;
+            int32_t is_break = 0;
+            int32_t fst_break = -1;
+            for(int32_t j=0; j < Ns-ns; j++) {
+                real b  = BOUND[j];
+                real mo = MO[j];
+                mo = mo / (sigma * sqrt((real)ns));
+                
+                if(is_break == 0) {
+                    if( (!isnan(mo)) && (fabs(mo) > b) ) {
+                        is_break = 1;
+                        fst_break = j;
+                    }
+                }
+                mean += mo;
+            }
 
-        fst_breaks[i] = fst_break;
-        means[i] = mean;        
-#if 0        
+            if(is_break) {
+                fst_break = (fst_break < Ns - ns) ? (val_ind[fst_break+ns] - n) : -1;
+            }
+            if ( (ns <= 5) || (Ns-ns <= 5) ) {
+                fst_break = -2;
+            }
+
+            fst_breaks[i] = fst_break;
+            means[i] = mean;
+        }
+      
         free(Xsqr);
         free(Xinv1);
         free(beta0);
         free(y_error);
         free(val_ind);
         free(MO);
-#endif
     }
-
-    printf("AFTER mainloop\n\n\n");
-
-#if 1        
-        free(Xsqr);
-        free(Xinv1);
-        free(beta0);
-        free(y_error);
-        free(val_ind);
-        free(MO);
-#endif
-
 
     free(BOUND);
     free(X);
@@ -369,8 +335,6 @@ int main(int argc, char** argv) {
 
         input = buildDataset(M, N, n, f_nan);
     }
-
-    printf("After mkDataset\n\n");
     
     { // 2. run CPU-parallel and report average runtime across RUNS_CPU runs
         int64_t elapsed, aft, bef = get_wall_time();
@@ -379,7 +343,6 @@ int main(int argc, char** argv) {
             real* means = (real*)malloc(input.M*sizeof(real));
             int32_t* fst_breaks = (int32_t*)malloc(input.M*sizeof(int32_t));
 
-            printf("before runbfastmulticore\n\n\n");
             runBfastMulticore(input, means, fst_breaks);
 
             free(means);

@@ -51,7 +51,7 @@ void mm3(const int32_t N, const int32_t K, real* Xt, real* beta, real* y_preds);
 int32_t filterKer(const int32_t N, real* Y, real* y_preds, int32_t* val_ind);
 HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, real* Yh, real* y_error);
 
-void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks);
+void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks);
 
 void freeResources(Dataset input) {
     free(input.mappingindices);
@@ -64,28 +64,30 @@ static int64_t get_wall_time(void) {
   return time.tv_sec * 1000000 + time.tv_usec;
 }
 
+int32_t min(int32_t a, int32_t b) {
+    return (a < b) ? a : b;
+}
+
 Dataset buildDataset(const int32_t M, const int32_t N, const int32_t n, const real f_nan) {
     Dataset res;
     const int32_t Npad = ((N + T_TILE - 1) / T_TILE) * T_TILE;
     res.M = M; res.N = N; res.n = n; res.trend = 1;
     res.k = 3; res.freq = 12.0; //for peru 365.0f32 for sahara
     res.hfrac = 0.25; res.lam = 1.736126;
-
-    printf("Before malloc\n\n");
     
     res.mappingindices = (int32_t*)malloc(N*sizeof(int32_t));
     res.image = (real*)malloc(M*Npad*sizeof(real));
 
     // filling in mapping indices with [1..N]
-    for(int32_t k=1; k<=N; k++) {
-        res.mappingindices[k] = k;
+    for(int32_t k=0; k<N; k++) {
+        res.mappingindices[k] = k+1;
     }
 
     // filling in the image with contrived data
     srand(246);
     for(int32_t i=0; i<M; i++) {
         real r01 = rand() / (real)RAND_MAX;
-        int32_t b0 = (r01 * N-n-2) + 1;
+        int32_t b0 = r01 * (N-n-2) + 1;
         int32_t brk= b0 + n; 
         for(int32_t j = 0; j < brk; j++) {
             real r01 = rand() / (real)RAND_MAX;
