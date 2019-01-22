@@ -1,4 +1,4 @@
-#define RUNS_CPU 10
+#define RUNS_CPU 1
 
 #include "bfast.h"
 
@@ -265,7 +265,7 @@ void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
         real* MO = (real*)malloc((N-n)*sizeof(real));
 #endif
         batchMMM (M, N, n, K, Y, X, Xsqr);
-        printf("after batchmmm\n\n\n");
+        printf("after batchmmm i = %d\n\n\n", i);
         batchMinv(K, Xsqr, Xinv1, Xinv2); // the result is in Xsqr
         printf("after mm1\n\n\n");
         mm1(N, n, K, X, Y, beta0);        // the result is in beta0

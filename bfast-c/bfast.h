@@ -51,6 +51,8 @@ void mm3(const int32_t N, const int32_t K, real* Xt, real* beta, real* y_preds);
 int32_t filterKer(const int32_t N, real* Y, real* y_preds, int32_t* val_ind);
 HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, real* Yh, real* y_error);
 
+void* runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks);
+
 void freeResources(Dataset input) {
     free(input.mappingindices);
     free(input.image);
