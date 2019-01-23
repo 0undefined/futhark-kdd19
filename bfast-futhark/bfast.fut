@@ -4,7 +4,6 @@
 -- output @ data/sahara.out.gz
 -- compiled input @ data/peru.in.gz
 -- output @ data/peru.out.gz
-
 -- compiled input @ data/d-16384-1024-512.in.gz
 -- compiled input @ data/d-16384-512-256.in.gz
 -- compiled input @ data/d-32768-256-128.in.gz
@@ -222,10 +221,10 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
 				      then ( (f32.abs mo) > b, j )
 				      else ( false, j )
 		         ) MO' BOUND (iota Nmn)
-		        |> reduce_comm (\ (b1,i1) (b2,i2) -> 
-               				    if b1 then (b1,i1) 
-              			          else if b2 then (b2, i2)
-    				              else (b1,i1) 
+		        |> reduce (\ (b1,i1) (b2,i2) -> 
+                                if b1 then (b1,i1) 
+                                else if b2 then (b2, i2)
+                                else (b1,i1) 
               	      	     ) (false, -1)
 	        let mean = map2 (\x j -> if j < Ns - ns then x else 0.0 ) MO' (iota Nmn)
 			    |> reduce (+) 0.0
