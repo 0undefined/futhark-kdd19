@@ -49,7 +49,7 @@ void mm1(const int32_t N, int32_t n, const int32_t K, real* Xh, real* Yh, real* 
 void mm2(const int32_t K, real* Xinv, real* beta0, real* beta);
 void mm3(const int32_t N, const int32_t K, real* Xt, real* beta, real* y_preds);
 int32_t filterKer(const int32_t N, real* Y, real* y_preds, int32_t* val_ind);
-HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, real* Yh, real* y_error);
+HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, real* Yh, real* y_error); 
 
 void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks);
 
