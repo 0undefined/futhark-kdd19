@@ -223,9 +223,10 @@ void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     const int32_t Ksq = K * K;
     const int32_t Npad = ((N + T_TILE - 1) / T_TILE) * T_TILE;
 
-    real* BOUND = (real*)malloc((N-n)*sizeof(real)); // [N-n]
-    real* X = (real*)malloc(K*Npad*sizeof(real)); // [K,N]
-    real* Xt= (real*)malloc(K*Npad*sizeof(real)); // [N,K]
+    real* mem1 = (real*)malloc( (2*K*Npad + (N-n) )*sizeof(real) );
+    real* X  = mem1;           // [K,N]
+    real* Xt = X + K*Npad;     // [N,K]
+    real* BOUND = Xt + K*Npad; // [N-n]
 
     // 1. compute BOUND
     mkBound(N, n, data.lam, data.mappingindices, BOUND);
@@ -235,14 +236,16 @@ void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
 
     #pragma omp parallel for
     for(int32_t ii=0; ii<M; ii+=CHUNK) {
-        real* Xsqr  = (real*)malloc(Ksq*sizeof(real));
-        real* Xinv1 = (real*)malloc(4*Ksq*sizeof(real));
-        real* Xinv2 = Xinv1 + 2*Ksq;
-        real* beta0 = (real*)malloc(2*K*sizeof(real));
-        real* beta  = beta0 + K;
-        real* y_error = (real*)malloc(N*sizeof(real));
-        int32_t* val_ind = (int32_t*)malloc(N*sizeof(int32_t));
-        real* MO = (real*)malloc((N-n)*sizeof(real));
+        real* mem2  = (real*)malloc( (Ksq + 4*Ksq + 2*K + N + N-n)*sizeof(real) + N*sizeof(int32_t) );
+
+        real* Xsqr    = mem2;           // [Ksq]
+        real* Xinv1   = Xsqr  + Ksq;    // [2*Ksq]
+        real* Xinv2   = Xinv1 + 2*Ksq;  // [2*Ksq]
+        real* beta0   = Xinv2 + 2*Ksq;  // [K]
+        real* beta    = beta0 + K;      // [k]
+        real* y_error = beta  + K;      // [N]
+        real* MO      = y_error + N;    // [N-n]
+        int32_t* val_ind = (int32_t*)(MO + N - n); // [N]
 
         for(int32_t i=ii; i<min(ii+CHUNK, M); i++) {
             real* Y = data.image + i*N;
@@ -298,17 +301,10 @@ void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
             means[i] = mean;
         }
       
-        free(Xsqr);
-        free(Xinv1);
-        free(beta0);
-        free(y_error);
-        free(val_ind);
-        free(MO);
+        free(mem2);
     }
 
-    free(BOUND);
-    free(X);
-    free(Xt);
+    free(mem1);
 }
 
 int main(int argc, char** argv) {
@@ -339,14 +335,11 @@ int main(int argc, char** argv) {
     { // 2. run CPU-parallel and report average runtime across RUNS_CPU runs
         int64_t elapsed, aft, bef = get_wall_time();
 
+        real* means = (real*)malloc(input.M*sizeof(real));
+        int32_t* fst_breaks = (int32_t*)malloc(input.M*sizeof(int32_t));
+
         for (int32_t i = 0; i < RUNS_CPU; i++) {
-            real* means = (real*)malloc(input.M*sizeof(real));
-            int32_t* fst_breaks = (int32_t*)malloc(input.M*sizeof(int32_t));
-
             runBfastMulticore(input, means, fst_breaks);
-
-            free(means);
-            free(fst_breaks);
         }
 
         aft = get_wall_time();
