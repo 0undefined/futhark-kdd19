@@ -1,0 +1,8 @@
+*.c
+bfast
+bfast-moderate
+bfast-unopt
+bfast-fused
+*.json
+*.expected
+*.actual
