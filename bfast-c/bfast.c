@@ -195,6 +195,7 @@ int32_t filterKer(const int32_t N, real* Y, real* y_preds, int32_t* val_ind) {
  * Y       : [n]real
  * y_error : [n]real
  * let (hs, nss, sigmas) = map2 (... redomap o redomap ...)
+ * OPTIMIZATION: BOTH loops can be FUSED in the previous kernel, i.e., filterKer
  */
 inline
 HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, real* Yh, real* y_error) {
