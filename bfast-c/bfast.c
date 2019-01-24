@@ -214,7 +214,7 @@ HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, rea
     return res;
 }
 
-#define CHUNK 64
+#define CHUNK 32
 void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     const int32_t M = data.M;
     const int32_t N = data.N;
@@ -234,7 +234,7 @@ void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
     // 2. compute X and its transpose Xt
     mkX(N, K, data.freq, data.mappingindices, X, Xt);
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for(int32_t ii=0; ii<M; ii+=CHUNK) {
         real* mem2  = (real*)malloc( (Ksq + 4*Ksq + 2*K + N + N-n)*sizeof(real) + N*sizeof(int32_t) );
 

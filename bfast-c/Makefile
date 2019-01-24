@@ -7,7 +7,7 @@ INCLUDES=bfast.h
 # $ ./bfast 67968 414 228 0.0
 
 CC=g++
-CFLAGS?=-O2 -fopenmp
+CFLAGS?=-O3 -fopenmp
 LDFLAGS = -lm
 
 all: $(PROGRAMS)
