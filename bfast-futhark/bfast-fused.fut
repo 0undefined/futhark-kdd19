@@ -2,7 +2,6 @@
 -- multiplication are kept separate (otherwise performance is awaful), the remaining
 -- steps up to and including the calculation of "hmax" is fused in one kernel.
 -- ==
--- compiled input @ data/sahara.in.gz
 -- compiled input @ data/peru.in.gz
 -- compiled input @ data/d-16384-1024-512.in.gz
 -- compiled input @ data/d-16384-512-256.in.gz
