@@ -17,7 +17,7 @@ all: $(PROGRAMS) $(DATASETS:=.runtime)
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
 
 peru.runtime:
-	./bfast 111556 235 235 0.5 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
+	./bfast 111556 235 113 0.5 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
 
 d-%.runtime:
 	./bfast $$(echo $* | sed 's/-/ /g') 0.5 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
