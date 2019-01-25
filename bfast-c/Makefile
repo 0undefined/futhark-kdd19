@@ -8,7 +8,7 @@ DATASETS=peru d-16384-1024-512 d-16384-512-256 d-32768-256-128 d-32768-512-256 d
 # $ ./bfast 67968 414 228 0.5
 
 CC?=gcc
-CFLAGS?=-O3 -fopenmp
+CFLAGS?=-O3 -fopenmp -std=c99
 LDFLAGS = -lm
 
 all: $(PROGRAMS) $(DATASETS:=.runtime)
