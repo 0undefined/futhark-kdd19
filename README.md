@@ -10,9 +10,9 @@ Folder `bfast-futhark` contain various bfast versions of the code written in Fut
 
 ### Datasets:
 
-The datasets are located in `bfast-futhark/data`: dataset `sahara.in` and `peru.in` correspond to actual images taken from Sahara and Peru. There are a bunch of contrived datasets, for example `d-32768-256-128.in.gz` corresponds to a randomly generated image in which the image has `32768` pixels, the time-series length is `256` and half of the time series (`128`) is used for training. In all contrived datasets `NaN` values appear with a frequency of `50%`, but we should vary that a little bit to demonstrate that performance is not influenced by the percentage of `NaN` values. 
+The datasets are located in `bfast-futhark/data`: dataset `sahara.in` and `peru.in` correspond to actual images taken from Sahara and Peru. There are a bunch of contrived datasets. The contrived datasets have been generated with the Futhark program `bfast-futhark/data/gen-datasets/gen-data.fut`, which receive as parameters in order: the number of pixels in the image (`M`), the length of the data series (`N`), the number of pixels used for training (`n`), and the fraction of `NaN` values (`nanfreq`). For example `nanfreq = 0.5` corresponds to half the values being `NaN`.
 
-The datasets have been generated with the Futhark program `bfast-futhark/data/gen-datasets/gen-data.fut`, which receive as parameters in order: the number of pixels in the image (`M`), the length of the data series (`N`), the number of pixels used for training (`n`), and the fraction of `NaN` values (`nanfreq`). For example `nanfreq = 0.5` corresponds to half the values being `NaN`.
+For example `d-32768-256-128.in.gz` corresponds to a randomly generated image in which the image has `32768` pixels (`M`), the time-series length is `256` (`N`) and half of the time series (`n = 128`) is used for training. In all contrived datasets `NaN` values appear with a frequency of `50%`. The Peru dataset has `M = 111556`, `N = 235`, and `n = 113`, and the `nanfreq` is around `0.75` (`75%` of values are `NaN`).
 
 An estimator of the number of floating point operations (Flops) for a dataset is implemented in Futhark program `perf-calculator.fut`. This estimates the Flops as they appear in the `bfast.fut` program. Floating point operations include, addition, multiplication, division, casts, `isnan`, special functions (`sqrt`, `log`), etc. The input of `perf-calculator.fut` is any dataset of Bfast.
 
@@ -64,3 +64,9 @@ $ futhark bench --backend opencl --pass-option --default-tile-size=8 bmmm-blktil
 
 ## (II) C + OpenMP Code for Bfast (Whole) Program
 
+This is implemented in folder `bfast-c`. The program creates its dataset internally, and requires the same parameters as `gen-data.fut`, namely, in order:
+
+* an integer denoting the number of pixels in the image (`M`), 
+* an integer denoting the length of the data series (`N`), 
+* an integer denoting the number of pixels used for training (`n`), 
+* a float denoting the fraction of `NaN` values (`nanfreq`).

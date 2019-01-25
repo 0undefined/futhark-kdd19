@@ -20,6 +20,7 @@
 typedef float real;
 
 typedef struct HNsSigmaStruct {
+    int32_t Ns;
     int32_t h;
     int32_t ns;
     real    sigma;

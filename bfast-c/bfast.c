@@ -176,42 +176,29 @@ void mm3(const int32_t N, const int32_t K, real* Xt, real* beta, real* y_preds) 
  * let (Nss, y_errors, val_indss) = map2 (...filterPadWithKeys...)
  */
 inline 
-int32_t filterKer(const int32_t N, real* Y, real* y_preds, int32_t* val_ind) {
-    int32_t count = 0;
+HNnsSigma filterKer(const int32_t N, const int32_t n, const int32_t K, const real hfrac, real* Y, real* y_preds, int32_t* val_ind) {
+    int32_t Ns = 0;
+    int32_t ns = 0;
+    int32_t h  = 0;
+    real    sigma = 0.0;
     for(int32_t i=0; i<N; i++) {
         real y  = Y[i];
         if(!isnan(y)) {
             real yp = y_preds[i];
             real d  = y - yp;
-            y_preds[count] = d;
-            val_ind[count] = i;
-            count++;
+            y_preds[Ns] = d;
+            val_ind[Ns] = i;
+            Ns++;
+            if (i < n) {
+                ns++;
+                sigma += d*d;
+            }
         }
     }
-    return count;
-}
-
-/**
- * Y       : [n]real
- * y_error : [n]real
- * let (hs, nss, sigmas) = map2 (... redomap o redomap ...)
- * OPTIMIZATION: BOTH loops can be FUSED in the previous kernel, i.e., filterKer
- */
-inline
-HNnsSigma sgmRedomap2Ker(const int32_t n, const int32_t K, const real hfrac, real* Yh, real* y_error) {
-    int32_t ns = 0, h = 0;
-    real sigma = 0.0;
-    for(int32_t i=0; i<n; i++) {
-        if (!isnan(Yh[i])) ns++;
-    }
-    for(int32_t i=0; i<ns; i++) {
-        real v = y_error[i];
-        sigma += v*v;
-    }
     sigma = sqrt( sigma / (ns-K));
-    h = (int) hfrac * ns;
+    h = (int) (hfrac * ns);
     HNnsSigma res;
-    res.h = h; res.ns = ns; res.sigma = sigma;
+    res.Ns = Ns; res.h = h; res.ns = ns; res.sigma = sigma;
     return res;
 }
 
@@ -257,8 +244,8 @@ void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
             mm2(K, Xsqr, beta0, beta);        // the result is in beta
             mm3(N, K, Xt, beta, y_error);     // the result is in y_error
 
-            int32_t Ns = filterKer(N, Y, y_error, val_ind); // result in y_error (y_error) and val_ind
-            HNnsSigma hnssig = sgmRedomap2Ker(n, K, data.hfrac, Y, y_error);
+            HNnsSigma hnssig = filterKer(N, n, K, data.hfrac, Y, y_error, val_ind);
+            int32_t Ns = hnssig.Ns;
             int32_t ns = hnssig.ns;
             int32_t h  = hnssig.h;
             real sigma = hnssig.sigma;
@@ -268,30 +255,27 @@ void runBfastMulticore(Dataset data, real* means, int32_t* fst_breaks) {
                 MO_fst += y_error[j + ns - h + 1];
             }
             
-            real MO_acc = MO_fst;
-            for(int32_t j=0; j < Ns-ns; j++) {
-                MO_acc += (-y_error[ns-h+j] + y_error[ns+j]);
-                MO[j] = MO_acc;
-            }
-
-            real mean = 0.0;
-            int32_t is_break = 0;
+            real mo = 0.0, mean = 0.0;
             int32_t fst_break = -1;
             for(int32_t j=0; j < Ns-ns; j++) {
-                real b  = BOUND[j];
-                real mo = MO[j];
-                mo = mo / (sigma * sqrt((real)ns));
-                
-                if(is_break == 0) {
-                    if( (!isnan(mo)) && (fabs(mo) > b) ) {
-                        is_break = 1;
+                real elm, mo1;
+                real b = BOUND[j];
+                if (j==0) { 
+                    elm = MO_fst; 
+                } else {
+                    elm = y_error[ns+j] - y_error[ns-h+j];
+                }
+                mo = mo + elm;
+                mo1 = mo / (sigma * sqrt((real)ns));
+                mean += mo1;
+                if(fst_break == -1) {
+                    if( (!isnan(mo1)) && (fabs(mo1) > b) ) {
                         fst_break = j;
                     }
                 }
-                mean += mo;
             }
 
-            if(is_break) {
+            if(fst_break != -1) {
                 fst_break = (fst_break < Ns - ns) ? (val_ind[fst_break+ns] - n) : -1;
             }
             if ( (ns <= 5) || (Ns-ns <= 5) ) {

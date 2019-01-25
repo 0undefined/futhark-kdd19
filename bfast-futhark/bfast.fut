@@ -3,7 +3,6 @@
 -- compiled input @ data/sahara.in.gz
 -- output @ data/sahara.out.gz
 -- compiled input @ data/peru.in.gz
--- output @ data/peru.out.gz
 -- compiled input @ data/d-16384-1024-512.in.gz
 -- compiled input @ data/d-16384-512-256.in.gz
 -- compiled input @ data/d-32768-256-128.in.gz
@@ -11,7 +10,7 @@
 -- compiled input @ data/d-65536-128-64.in.gz
 -- compiled input @ data/d-65536-256-128.in.gz
 
--- output @ data/sahara.out.gz
+-- output @ data/peru.out.gz
 
 let logplus (x: f32) : f32 =
   if x > (f32.exp 1)
