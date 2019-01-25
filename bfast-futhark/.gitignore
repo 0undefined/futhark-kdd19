@@ -6,3 +6,4 @@ bfast-fused
 *.json
 *.expected
 *.actual
+*.ops
