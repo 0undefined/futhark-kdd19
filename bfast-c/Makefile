@@ -8,7 +8,7 @@ DATASETS=peru d-16384-1024-512 d-16384-512-256 d-32768-256-128 d-32768-512-256 d
 # $ ./bfast 67968 414 228 0.5
 
 CC?=gcc
-CFLAGS?=-O3 -fopenmp
+CFLAGS?=-O3 -fopenmp -std=c99
 LDFLAGS = -lm
 
 all: $(PROGRAMS) $(DATASETS:=.runtime)
@@ -17,7 +17,7 @@ all: $(PROGRAMS) $(DATASETS:=.runtime)
 	$(CC) -o $@ $< $(CFLAGS) $(LDFLAGS)
 
 peru.runtime:
-	./bfast 111556 235 235 0.5 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
+	./bfast 111556 235 113 0.5 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
 
 d-%.runtime:
 	./bfast $$(echo $* | sed 's/-/ /g') 0.5 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@

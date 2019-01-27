@@ -23,7 +23,7 @@ void mkBound(const int32_t N, const int32_t n, const real lam, int32_t* mappingi
  *  The results is (X, Xt)
  */
 inline
-real* mkX(const uint32_t N, const uint32_t k2p2, const real f, int32_t* mappingindices, real* X, real* Xt) {
+void mkX(const uint32_t N, const uint32_t k2p2, const real f, int32_t* mappingindices, real* X, real* Xt) {
     // compute X and transpose of X
     // does not make sense to parallelize or to optimize
     // because this takes negligible runtime (N < 1000, k2p2 = 8)
