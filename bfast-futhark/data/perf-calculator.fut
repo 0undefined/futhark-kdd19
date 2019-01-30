@@ -18,7 +18,7 @@ entry main [m'][N'] (_trend: i32) (k': i32) (n': i32) (_freq: f32)
     let bmmm_words = 2*m*n*K
 
     -- 3. batch matrix inversion; Xinv = map mat_inv Xsqr
-    let bminv_flops = 3*m*K*K
+    let bminv_flops = 3*m*K*K*2*K
     let bminv_words = 4*m*K*K
 
     -- 4. 1st mat-mat-mult; beta0 : [m][2k+2]f32 = map (matvecmul_row_filt Xh) Yh
