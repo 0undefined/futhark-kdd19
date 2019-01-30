@@ -17,7 +17,7 @@ datasets = ['sahara-Xsqr',
             'd-Xsqr-65536-256-128']
 
 def get_num_ops(dataset):
-    return 1000000000
+    return int(open('bfast-futhark/{}.ops'.format(dataset.replace('-Xsqr', ''))).read().splitlines()[2])
 
 def get_futhark_results(variant):
     json_file = 'bfast-futhark/indiv-kernels/matrix-inv/matinv{}.json'.format(variant)

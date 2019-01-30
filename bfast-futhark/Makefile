@@ -1,5 +1,5 @@
 DEVICE?=\#0 # If you wish, set the OpenCL device to use.
-DATASETS=peru d-16384-1024-512 d-16384-512-256 d-32768-256-128 d-32768-512-256 d-65536-128-64 d-65536-256-128
+DATASETS=sahara peru d-16384-1024-512 d-16384-512-256 d-32768-256-128 d-32768-512-256 d-65536-128-64 d-65536-256-128
 
 all: bfast.json bfast-moderate.json bfast-unopt.json bfast-fused.json $(DATASETS:=.ops)
 
@@ -19,7 +19,7 @@ data/perf-calculator: data/perf-calculator.fut
 	futhark c $<
 
 %.ops: data/perf-calculator
-	gunzip < data/$*.in.gz | data/perf-calculator | head -n 1 | sed s/u64// > $@
+	gunzip < data/$*.in.gz | data/perf-calculator | head -n 3 | sed s/u64// > $@
 
 clean:
 	rm -f *.json *.c bfast bfast-unopt bfast-fused *.ops data/perf-calculator

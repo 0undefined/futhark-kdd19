@@ -1,6 +1,6 @@
 DEVICE?=\#0 # If you wish, set the OpenCL device to use.
 
-all: matinv-outer.json matinv.json
+all: matinv-outer.json matinv.json $(DATASETS:=.ops)
 
 matinv-outer.json: matinv-outer.fut
 	futhark bench --json $@ --backend=opencl $< --runs 100 --pass-option=-d'$(DEVICE)'

@@ -19,7 +19,7 @@ datasets = ['peru',
             'd-65536-256-128']
 
 def get_num_ops(dataset):
-    return int(open('bfast-futhark/{}.ops'.format(dataset)).read())
+    return int(open('bfast-futhark/{}.ops'.format(dataset)).read().splitlines()[0])
 
 def get_futhark_results(json_file, prog):
     dataset_results = json.load(open(json_file))[prog]['datasets']

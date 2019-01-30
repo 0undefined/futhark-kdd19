@@ -61,3 +61,4 @@ entry main [m'][N'] (_trend: i32) (k': i32) (n': i32) (_freq: f32)
                        filtpad_words + sgmred_words + mvsfst_words + bound_words + res_words) * 4
 
     in  (total_flops, bmmm_flops, bminv_flops, m, N, n, K, hmax, total_bytes)
+        
