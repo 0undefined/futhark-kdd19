@@ -24,18 +24,19 @@ let gauss_jordan [nm] (n:i32) (m:i32) (A: *[nm]f32): [nm]f32 =
   in A
 
 let mat_inv [n] (A: [n][n]f32): [][]f32 =
-    let m = 2*n
-    let nm= n*m
-    -- Pad the matrix with the identity matrix.
-    let Ap = map (\ind -> let (i, j) = (ind / m, ind % m)
-                          in  if j < n then unsafe ( A[i,j] )
-                                       else if j == n+i
-                                            then 1.0
-                                            else 0.0
-                 ) (iota nm)
-    let Ap' = gauss_jordan n m Ap
-    -- Drop the identity matrix at the front!
-    in (unflatten n m Ap')[0:n,n:2*n]
+  unsafe
+  let m = 2*n
+  let nm= n*m
+  -- Pad the matrix with the identity matrix.
+  let Ap = map (\ind -> let (i, j) = (ind / m, ind % m)
+                        in  if j < n then unsafe ( A[i,j] )
+                                     else if j == n+i
+                                          then 1.0
+                                          else 0.0
+               ) (iota nm)
+  let Ap' = gauss_jordan n m Ap
+  -- Drop the identity matrix at the front!
+  in (unflatten n m Ap')[0:n,n:2*n]
 
 entry main [m][k] (Xsqr: [m][k][k]f32) =
     map mat_inv Xsqr

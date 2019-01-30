@@ -49,18 +49,23 @@ datas=[(get_futhark_results('bfast-futhark/bfast.json', 'bfast.fut'), '#000000',
        (get_c_results(), '#bbbbbb', 'C')]
 
 ax = plt.subplot(111)
+plt.tight_layout()
 ind = np.arange(len(datasets))
 width=0.2
 
 for ((data, color, name), i) in zip(datas, range(len(datas))):
-        offset = i*width
-        ax.bar(ind+offset, data,
-               width=width,
-               color=color,
-               align='center',
-               label=name)
+    offset = i*width
+    ax.bar(ind+offset, data,
+           width=width,
+           color=color,
+           align='center',
+           label=name)
 
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(datasets, rotation=-45)
 ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.05), framealpha=1)
-plt.show()
+
+if len(sys.argv) > 1:
+    plt.savefig(sys.argv[1], bbox_inches='tight')
+else:
+    plt.show()
