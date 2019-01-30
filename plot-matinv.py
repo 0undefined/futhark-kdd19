@@ -6,7 +6,7 @@ import json
 
 import matplotlib
 
-# matplotlib.use('Agg') # For headless use
+matplotlib.use('Agg') # For headless use
 
 import matplotlib.pyplot as plt
 
