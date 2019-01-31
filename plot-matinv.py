@@ -35,11 +35,13 @@ def get_futhark_results(variant):
 datas=[(get_futhark_results(''), '#000000', 'All parallelism'),
        (get_futhark_results('-outer'), '#222222', 'Outer parallelism')]
 
+plt.figure(figsize=(4,2))
 ax = plt.subplot(111)
 plt.tight_layout()
 ind = np.arange(len(datasets))
 width=0.2
-
+ax.set_axisbelow(True)
+plt.grid(axis='y')
 for ((data, color, name), i) in zip(datas, range(len(datas))):
     offset = i*width
     ax.bar(ind+offset, data,
@@ -49,8 +51,11 @@ for ((data, color, name), i) in zip(datas, range(len(datas))):
            label=name)
 
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
-ax.set_xticklabels(datasets, rotation=-45)
+ax.set_xticklabels(map(lambda x: x.replace('-Xsqr', ''), datasets))
+for tick in ax.xaxis.get_major_ticks()[1::2]:
+    tick.set_pad(15)
 ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.05), framealpha=1)
+plt.ylabel('GFLOPS')
 
 if len(sys.argv) > 1:
     plt.savefig(sys.argv[1], bbox_inches='tight')

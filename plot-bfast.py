@@ -48,11 +48,13 @@ datas=[(get_futhark_results('bfast-futhark/bfast.json', 'bfast.fut'), '#000000',
        (get_futhark_results('bfast-futhark/bfast-fused.json', 'bfast-fused.fut'), '#666666', 'Fused'),
        (get_c_results(), '#bbbbbb', 'C')]
 
+plt.figure(figsize=(6,2))
 ax = plt.subplot(111)
 plt.tight_layout()
 ind = np.arange(len(datasets))
-width=0.2
-
+width=0.18
+ax.set_axisbelow(True)
+plt.grid(axis='y')
 for ((data, color, name), i) in zip(datas, range(len(datas))):
     offset = i*width
     ax.bar(ind+offset, data,
@@ -62,8 +64,11 @@ for ((data, color, name), i) in zip(datas, range(len(datas))):
            label=name)
 
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
-ax.set_xticklabels(datasets, rotation=-45)
+ax.set_xticklabels(datasets)
+for tick in ax.xaxis.get_major_ticks()[1::2]:
+    tick.set_pad(15)
 ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.05), framealpha=1)
+plt.ylabel('GFLOPS')
 
 if len(sys.argv) > 1:
     plt.savefig(sys.argv[1], bbox_inches='tight')
