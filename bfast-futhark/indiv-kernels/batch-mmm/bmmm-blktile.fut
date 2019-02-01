@@ -4,12 +4,12 @@
 -- REMEMBER to run with --default-tile-size=8, as in:
 --   $ futhark bench --backend opencl --pass-option --default-tile-size=8 bmmm-blktile.fut
 -- ==
--- compiled input @ data/d-16384-1024-512.in.gz
--- compiled input @ data/d-16384-512-256.in.gz
--- compiled input @ data/d-32768-512-256.in.gz
--- compiled input @ data/d-32768-256-128.in.gz
--- compiled input @ data/d-65536-256-128.in.gz
--- compiled input @ data/d-16384-1024-256.in.gz
+-- compiled input @ data/D1.in.gz
+-- compiled input @ data/D2.in.gz
+-- compiled input @ data/D3.in.gz
+-- compiled input @ data/D4.in.gz
+-- compiled input @ data/D5.in.gz
+-- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
 
 -- | builds the X matrices; first result dimensions of size 2*k+2

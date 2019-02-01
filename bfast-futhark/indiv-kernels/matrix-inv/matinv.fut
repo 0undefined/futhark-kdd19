@@ -1,9 +1,9 @@
 -- This is a intra-group-paralle version of code for gauss-jordan martrix
 --   inversion kernel of bfast.
 -- ==
--- compiled input @ ../../data/d-Xsqr-16384-1024-512.in.gz
--- compiled input @ ../../data/d-Xsqr-32768-512-256.in.gz
--- compiled input @ ../../data/d-Xsqr-65536-256-128.in.gz
+-- compiled input @ ../../data/D1-Xsqr.in.gz
+-- compiled input @ ../../data/D3-Xsqr.in.gz
+-- compiled input @ ../../data/D5-Xsqr.in.gz
 -- compiled input @ ../../data/peru-Xsqr.in.gz
 -- compiled input @ ../../data/sahara-Xsqr.in.gz
 
