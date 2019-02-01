@@ -1,11 +1,11 @@
 -- BFAST-irregular: version handling obscured observations (e.g., clouds)
 -- ==
--- compiled input @ data/d-16384-1024-512.in.gz
--- compiled input @ data/d-16384-512-256.in.gz
--- compiled input @ data/d-32768-512-256.in.gz
--- compiled input @ data/d-32768-256-128.in.gz
--- compiled input @ data/d-65536-256-128.in.gz
--- compiled input @ data/d-16384-1024-256.in.gz
+-- compiled input @ data/D1.in.gz
+-- compiled input @ data/D2.in.gz
+-- compiled input @ data/D3.in.gz
+-- compiled input @ data/D4.in.gz
+-- compiled input @ data/D5.in.gz
+-- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
 
 -- compiled input @ data/peru.in.gz
