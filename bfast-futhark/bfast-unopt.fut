@@ -171,7 +171,6 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
   ----------------------------------------------
   unzip <|
   map3 (\ y y_pred ii -> if ii > 50000000 then (-1, 0.0f32) else
-          let yh = unsafe y[:n]
           -- filter o redomap o redomap phase
           let (count, n', sigma0, yerr, keys) = (0, 0, 0, replicate N f32.nan, replicate N 0)
           let (N', n', sigma0, y_error, keys) =

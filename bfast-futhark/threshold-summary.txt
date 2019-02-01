@@ -186,6 +186,30 @@ FUTHARK_INCREMENTAL_FLATTENING=1 futhark bench --backend opencl --pass-option --
 FUTHARK_INCREMENTAL_FLATTENING=1 futhark bench --skip-compilation bfast.fut --pass-option --default-tile-size=16 --pass-option --size=main.suff_outer_par_6=50000000 --pass-option --size=main.suff_intra_par_7=2048 --pass-option --size=main.suff_outer_par_8=50000000 --pass-option --size=main.suff_intra_par_9=2048 --pass-option --size=main.suff_outer_par_10=1  --pass-option --size=main.suff_intra_par_11=2048 --pass-option --size=main.suff_intra_par_13=1 --pass-option --size=main.suff_outer_par_17=50000000 --pass-option --size=main.suff_intra_par_18=2048 --pass-option --size=main.suff_outer_par_19=1 --pass-option --size=main.suff_intra_par_20=2048 --pass-option --size=main.suff_outer_par_21=50000000 --pass-option --size=main.suff_intra_par_22=2048 --pass-option --size=main.suff_outer_par_23=50000000 --pass-option --size=main.suff_intra_par_24=2048 --pass-option --size=main.suff_outer_par_25=50000000 --pass-option --size=main.suff_intra_par_26=2048 --pass-option --size=main.suff_outer_par_27=1 --pass-option --size=main.suff_intra_par_28=2048 --pass-option --size=main.suff_outer_par_29=50000000 --pass-option --size=main.suff_intra_par_30=1 --pass-option --size=main.suff_outer_par_33=50000000 --pass-option --size=main.suff_intra_par_34=1 --pass-option --size=main.suff_outer_par_35=50000000 --pass-option --size=main.suff_intra_par_36=2048 --pass-option --size=main.suff_outer_par_38=50000000 --pass-option --size=main.suff_intra_par_39=1
 
 #########################################
+### For Futhark Mixed:
+#########################################
+
+FUTHARK_INCREMENTAL_FLATTENING=1 futhark bench --backend opencl --pass-option --default-tile-size=16 --pass-option --size=main.suff_outer_par_7=50000000 --pass-option --size=main.suff_intra_par_8=2048 --pass-option --size=main.suff_outer_par_9=50000000 --pass-option --size=main.suff_intra_par_10=2048 --pass-option --size=main.suff_outer_par_11=1  --pass-option --size=main.suff_intra_par_12=2048 --pass-option --size=main.suff_intra_par_14=1 --pass-option --size=main.suff_outer_par_18=50000000 --pass-option --size=main.suff_intra_par_19=2048 --pass-option --size=main.suff_outer_par_20=1 --pass-option --size=main.suff_intra_par_21=2048 --pass-option --size=main.suff_outer_par_22=50000000 --pass-option --size=main.suff_intra_par_23=2048 --pass-option --size=main.suff_outer_par_24=50000000 --pass-option --size=main.suff_intra_par_25=2048 --pass-option --size=main.suff_outer_par_26=50000000 --pass-option --size=main.suff_intra_par_27=2048 --pass-option --size=main.suff_outer_par_28=1 --pass-option --size=main.suff_intra_par_29=2048 bfast-mixed.fut
+
+Results for bfast-mixed.fut:
+dataset data/d-16384-1024-512.in:   16009.80μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-16384-512-256.in:     7809.10μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-32768-512-256.in:    16053.70μs (avg. of 10 runs; RSD: 0.02)
+dataset data/d-32768-256-128.in:     8261.60μs (avg. of 10 runs; RSD: 0.02)
+dataset data/d-65536-256-128.in:    15553.50μs (avg. of 10 runs; RSD: 0.02)
+dataset data/d-16384-1024-256.in:   10739.80μs (avg. of 10 runs; RSD: 0.00)
+dataset data/peru.in:               17070.60μs (avg. of 10 runs; RSD: 0.00)
+
+Results for bfast.fut:
+dataset data/d-16384-1024-512.in:   12146.40μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-16384-512-256.in:     6065.70μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-32768-512-256.in:    11773.70μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-32768-256-128.in:     6321.60μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-65536-256-128.in:    12395.90μs (avg. of 10 runs; RSD: 0.00)
+dataset data/d-16384-1024-256.in:   11940.90μs (avg. of 10 runs; RSD: 0.00)
+dataset data/peru.in:               19312.80μs (avg. of 10 runs; RSD: 0.03)
+
+#########################################
 ### Result of autotuning (VERY POOR)
 #########################################
 
