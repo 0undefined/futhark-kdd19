@@ -31,8 +31,8 @@ def get_futhark_results(variant):
         res += [{'runtime': mean_s, 'gflops': gflops}]
     return res
 
-datas=[(get_futhark_results('glob-mem'), '#000000', 'FastMem'),
-       (get_futhark_results('fast-mem'), '#888888', 'GlobMem')]
+datas=[(get_futhark_results('fast-mem'), '#888888', 'FastMem'),
+       (get_futhark_results('glob-mem'), '#000000', 'GlobMem')]
 
 plt.figure(figsize=(6,2))
 ax = plt.subplot(111)
@@ -49,9 +49,15 @@ for ((data, color, name), i) in zip(datas, range(len(datas))):
            align='center',
            label=name)
 
+ymin, ymax = plt.ylim()
+
+yticks = ax.get_yticks()
+ydiff = yticks[1]-yticks[0]
+
+
+ax.set_yticks(np.concatenate((ax.get_yticks(), ax.get_yticks()[1:] - ydiff/2)))
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(map(lambda x: x.replace('-Xsqr', ''), datasets))
-
 ymin, ymax = plt.ylim()
 for (x, data) in zip(ax.get_xticks(), datas[0][0]):
     ax.text(x, -ymax/4,

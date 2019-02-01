@@ -63,10 +63,14 @@ for ((data, color, name), i) in zip(datas, range(len(datas))):
                    align='center',
                    label=name)
 
+ymin, ymax = plt.ylim()
+
+yticks = ax.get_yticks()
+ydiff = yticks[1]-yticks[0]
+ax.set_yticks(np.concatenate((ax.get_yticks(), ax.get_yticks()[1:] - ydiff/2)))
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(datasets)
 
-ymin, ymax = plt.ylim()
 for (x, data) in zip(ax.get_xticks(), datas[0][0]):
     ax.text(x, -ymax/4,
             "$%.2fms$" % (data['runtime']*1000),
