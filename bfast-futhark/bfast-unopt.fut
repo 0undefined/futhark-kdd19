@@ -165,47 +165,83 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
                |> intrinsics.opaque -- ^ requires transposition of Xt (small)
                                     --   can be eliminated by passing
                                     --   (transpose X) instead of Xt
-  in
-  ----------------------------------------------
-  --- we fuse the remaining kernels into one ---
-  ----------------------------------------------
-  unzip <|
-  map3 (\ y y_pred ii -> if ii > 50000000 then (-1, 0.0f32) else
-          let yh = unsafe y[:n]
-          -- filter o redomap o redomap phase
-          let (count, n', sigma0, yerr, keys) = (0, 0, 0, replicate N f32.nan, replicate N 0)
-          let (N', n', sigma0, y_error, keys) =
-            loop (count, n', sigma0, yerr, keys) for i < N do
-              let yi = y[i] in
-              if f32.isnan yi then (count, n', sigma0, yerr, keys)
-              else let ye = yi - y_pred[i] in unsafe
-                   let yerr[count] = ye
-                   let keys[count] = i
-                   let (n'', sigma0') = if i<n then (n'+1, sigma0+ye*ye) else (n', sigma0)
-                   in  (count+1, n'', sigma0', yerr, keys)
-          let sigma = f32.sqrt ( sigma0 / (r32 (n' - k2p2)) )
-          let h     = t32 ( (r32 n') * hfrac )
-          -- last kernel
-          let MO_fst = map (\i -> unsafe y_error[i+n'-h+1]) (unsafe (iota h))
-                      |> reduce (+) 0.0
+  ---------------------------------------------
+  -- 5. filter etc.                          --
+  ---------------------------------------------
+  let (Nss, y_errors, val_indss) = ( intrinsics.opaque <| unzip3 <|
+    map2 (\y y_pred ->
+            let y_error_all = zip y y_pred |>
+                map (\(ye,yep) -> if !(f32.isnan ye) 
+                                  then ye-yep else f32.nan )
+            let (tups, Ns) = filterPadWithKeys (\y -> !(f32.isnan y)) (f32.nan) y_error_all
+            let (y_error, val_inds) = unzip tups
+            in  (Ns, y_error, val_inds)
+         ) images y_preds )
 
-          let (fst_break, mean, _) = 
-            loop (fst_break, mean, mo) = (-1,0.0,0.0)
-              for i < N'-n' do
-                let elm = if i==0 then MO_fst 
-                                  else unsafe (-y_error[n'-h+i] + y_error[n'+i])
-                let mo = mo + elm
-                let mo' = mo / (sigma * (f32.sqrt (r32 n')))
-                let fst_break = if (fst_break == -1) && !(f32.isnan mo') && ((f32.abs mo') > unsafe BOUND[i])
-                                then i else fst_break
-                in  (fst_break, mean + mo', mo)
+  ------------------------------------------------
+  -- 6. ns and sigma (can be fused with above)  --
+  ------------------------------------------------
+  let (hs, nss, sigmas) = intrinsics.opaque <| unzip3 <|
+    map2 (\yh y_error ->
+            let ns    = map (\ye -> if !(f32.isnan ye) then 1 else 0) yh
+                        |> reduce (+) 0
+            let sigma = map (\i -> if i < ns then unsafe y_error[i] else 0.0) (iota n)
+                        |> map (\ a -> a*a ) |> reduce (+) 0.0
+            let sigma = f32.sqrt ( sigma / (r32 (ns-k2p2)) )
+            let h     = t32 ( (r32 ns) * hfrac )
+            in  (h, ns, sigma)
+         ) Yh y_errors
 
-	      let fst_break' = if fst_break == -1 then -1
-                           else let adj_break = adjustValInds n n' N' keys fst_break
-                                in  ((adj_break-1) / 2) * 2 + 1  -- Cosmin's validation hack
-          let fst_break' = if n' <=5 || N'-n' <= 5 then -2 else fst_break'
-          
-          in (fst_break', mean)
-          
-       ) images y_preds (iota m)
+  ---------------------------------------------
+  -- 7. moving sums first and bounds:        --
+  ---------------------------------------------
+  let hmax = reduce_comm (i32.max) 0 hs
+  let MO_fsts = zip3 y_errors nss hs |>
+    map (\(y_error, ns, h) -> unsafe
+            map (\i -> if i < h then unsafe y_error[i + ns-h+1] else 0.0) (iota hmax)
+            |> reduce (+) 0.0 
+        ) |> intrinsics.opaque
+
+  let BOUND = map (\q -> let t   = n+1+q
+                         let time = unsafe mappingindices[t-1]
+                         let tmp = logplus ((r32 time) / (r32 mappingindices[N-1]))
+                         in  lam * (f32.sqrt tmp)
+                  ) (iota (N-n))
+
+  ---------------------------------------------
+  -- 8. moving sums computation:             --
+  ---------------------------------------------
+  let (_MOs, _MOs_NN, breaks, means) = zip (zip4 Nss nss sigmas hs) (zip3 MO_fsts y_errors val_indss) |>
+    map (\ ( (Ns,ns,sigma, h), (MO_fst,y_error,val_inds) ) ->
+            let Nmn = N-n
+            let MO = map (\j -> if j >= Ns-ns then 0.0
+                                else if j == 0 then MO_fst
+                                else unsafe (-y_error[ns-h+j] + y_error[ns+j])
+                         ) (iota Nmn) |> scan (+) 0.0
+	    
+            let MO' = map (\mo -> mo / (sigma * (f32.sqrt (r32 ns))) ) MO
+	        let (is_break, fst_break) = 
+		    map3 (\mo' b j ->  if j < Ns - ns && !(f32.isnan mo')
+				      then ( (f32.abs mo') > b, j )
+				      else ( false, j )
+		         ) MO' BOUND (iota Nmn)
+		        |> reduce (\ (b1,i1) (b2,i2) -> 
+                                if b1 then (b1,i1) 
+                                else if b2 then (b2, i2)
+                                else (b1,i1) 
+              	      	     ) (false, -1)
+	        let mean = map2 (\x j -> if j < Ns - ns then x else 0.0 ) MO' (iota Nmn)
+			    |> reduce (+) 0.0
+
+	        let fst_break' = if !is_break then -1
+                             else let adj_break = adjustValInds n ns Ns val_inds fst_break
+                                  in  ((adj_break-1) / 2) * 2 + 1  -- Cosmin's validation hack
+            let fst_break' = if ns <=5 || Ns-ns <= 5 then -2 else fst_break'
+
+            let val_inds' = map (adjustValInds n ns Ns val_inds) (iota Nmn)
+            let MO'' = scatter (replicate Nmn f32.nan) val_inds' MO'
+            in (MO'', MO', fst_break', mean)
+        ) |> unzip4
+
+  in (breaks, means)
 
