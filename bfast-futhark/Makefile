@@ -10,10 +10,10 @@ bfast-RegTl-EfSeq.json: bfast-RegTl-EfSeq.fut
 	futhark bench --backend opencl --pass-option --default-tile-size=16 $< --json $@ --runs 100 --pass-option=-d'$(DEVICE)'
 
 bfast-All-EfSeq.json: bfast-All-EfSeq.fut
-	futhark bench --backend opencl --pass-option --default-tile-size=16 $< --json $@ --runs 10 --pass-option=-d'$(DEVICE)'
+	futhark bench --backend opencl --pass-option --default-tile-size=8 $< --json $@ --runs 10 --pass-option=-d'$(DEVICE)'
 
 bfast-BlkTl-EfSeq.json: bfast-BlkTl-EfSeq.fut
-	futhark bench --backend opencl --pass-option --default-tile-size=16 $< --json $@ --runs 100 --pass-option=-d'$(DEVICE)'
+	futhark bench --backend opencl --pass-option --default-tile-size=8 $< --json $@ --runs 100 --pass-option=-d'$(DEVICE)'
 
 data/perf-calculator: data/perf-calculator.fut
 	futhark c $<

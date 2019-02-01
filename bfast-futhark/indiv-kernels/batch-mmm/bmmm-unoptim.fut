@@ -44,7 +44,9 @@ entry main [m][N] (_trend: i32) (k: i32) (n: i32) (freq: f32)
   let X = mkX_with_trend k2p2 freq (mappingindices[:n])
   let Xt= copy (transpose X)
   
+  let Xh  =  (X[:,:n])
+  let Xth =  (Xt[:n,:])
   let Yh  =  (images[:,:n])
   
-  let Xsqr = map (matmul_filt X Xt) Yh
+  let Xsqr = map (matmul_filt Xh Xth) Yh
   in  Xsqr
