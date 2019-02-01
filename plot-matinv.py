@@ -29,7 +29,7 @@ def get_futhark_results(variant):
         dataset_runtimes = dataset_results['../../data/{}.in'.format(dataset)]['runtimes']
         mean_s = np.mean(dataset_runtimes)/1e6
         gflops = (num_ops/mean_s)/1e9
-        res += [gflops]
+        res += [{'runtime': mean_s, 'gflops': gflops}]
     return res
 
 datas=[(get_futhark_results(''), '#000000', 'All parallelism'),
@@ -44,17 +44,23 @@ ax.set_axisbelow(True)
 plt.grid(axis='y')
 for ((data, color, name), i) in zip(datas, range(len(datas))):
     offset = i*width
-    ax.bar(ind+offset, data,
-           width=width,
-           color=color,
-           align='center',
-           label=name)
+    rects = ax.bar(ind+offset, map(lambda x: x['gflops'], data),
+                   width=width,
+                   color=color,
+                   align='center',
+                   label=name)
+
+    ymin, ymax = plt.ylim()
+
+    if i == 0:
+        for (r, x) in zip(rects, data):
+            plt.text(r.get_x()+width*len(datas)/2, -ymax/4,
+                     "$%.2fms$" % (x['runtime']*1000),
+                     ha='center', va='baseline', weight='bold')
 
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(map(lambda x: x.replace('-Xsqr', ''), datasets))
-for tick in ax.xaxis.get_major_ticks()[1::2]:
-    tick.set_pad(15)
-ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.05), framealpha=1)
+ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.25), framealpha=1)
 plt.ylabel('GFLOPS')
 
 if len(sys.argv) > 1:
