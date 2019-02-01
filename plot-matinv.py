@@ -10,18 +10,17 @@ matplotlib.use('Agg') # For headless use
 
 import matplotlib.pyplot as plt
 
-datasets = ['sahara-Xsqr',
-            'peru-Xsqr',
-            'd-Xsqr-16384-1024-512',
-            'd-Xsqr-32768-512-256',
-            'd-Xsqr-65536-256-128']
+datasets = ['peru-Xsqr',
+            'D1-Xsqr',
+            'D3-Xsqr',
+            'D5-Xsqr']
 
 def get_num_ops(dataset):
     return int(open('bfast-futhark/{}.ops'.format(dataset.replace('-Xsqr', ''))).read().splitlines()[2])
 
 def get_futhark_results(variant):
-    json_file = 'bfast-futhark/indiv-kernels/matrix-inv/matinv{}.json'.format(variant)
-    prog = 'matinv{}.fut'.format(variant)
+    json_file = 'bfast-futhark/indiv-kernels/matrix-inv/matinv-{}.json'.format(variant)
+    prog = 'matinv.fut'
     dataset_results = json.load(open(json_file))[prog]['datasets']
     res = []
     for dataset in datasets:
@@ -32,10 +31,10 @@ def get_futhark_results(variant):
         res += [{'runtime': mean_s, 'gflops': gflops}]
     return res
 
-datas=[(get_futhark_results(''), '#000000', 'All parallelism'),
-       (get_futhark_results('-outer'), '#222222', 'Outer parallelism')]
+datas=[(get_futhark_results('glob-mem'), '#000000', 'FastMem'),
+       (get_futhark_results('fast-mem'), '#888888', 'GlobMem')]
 
-plt.figure(figsize=(4,2))
+plt.figure(figsize=(6,2))
 ax = plt.subplot(111)
 plt.tight_layout()
 ind = np.arange(len(datasets))
@@ -44,24 +43,23 @@ ax.set_axisbelow(True)
 plt.grid(axis='y')
 for ((data, color, name), i) in zip(datas, range(len(datas))):
     offset = i*width
-    rects = ax.bar(ind+offset, map(lambda x: x['gflops'], data),
-                   width=width,
-                   color=color,
-                   align='center',
-                   label=name)
-
-    ymin, ymax = plt.ylim()
-
-    if i == 0:
-        for (r, x) in zip(rects, data):
-            plt.text(r.get_x()+width*len(datas)/2, -ymax/4,
-                     "$%.2fms$" % (x['runtime']*1000),
-                     ha='center', va='baseline', weight='bold')
+    ax.bar(ind+offset, map(lambda x: x['gflops'], data),
+           width=width,
+           color=color,
+           align='center',
+           label=name)
 
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(map(lambda x: x.replace('-Xsqr', ''), datasets))
-ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.25), framealpha=1)
-plt.ylabel('GFLOPS')
+
+ymin, ymax = plt.ylim()
+for (x, data) in zip(ax.get_xticks(), datas[0][0]):
+    ax.text(x, -ymax/4,
+            "$%.2fms$" % (data['runtime']*1000),
+            ha='center', va='baseline', weight='bold')
+
+ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.3), framealpha=1)
+plt.ylabel('$GFLOPS^{Sp}$')
 
 if len(sys.argv) > 1:
     plt.savefig(sys.argv[1], bbox_inches='tight')

@@ -11,12 +11,12 @@ matplotlib.use('Agg') # For headless use
 import matplotlib.pyplot as plt
 
 datasets = ['peru',
-            'd-16384-1024-512',
-            'd-16384-512-256',
-            'd-32768-256-128',
-            'd-32768-512-256',
-            'd-65536-128-64',
-            'd-65536-256-128']
+            'D1',
+            'D2',
+            'D3',
+            'D4',
+            'D5',
+            'D6']
 
 def get_num_ops(dataset):
     return int(open('bfast-futhark/{}.ops'.format(dataset)).read().splitlines()[0])
@@ -42,10 +42,10 @@ def get_c_results():
         res += [{'runtime': mean_s, 'gflops': gflops}]
     return res
 
-datas=[(get_futhark_results('bfast-futhark/bfast.json', 'bfast.fut'), '#000000', 'Incremental'),
-       (get_futhark_results('bfast-futhark/bfast-moderate.json', 'bfast.fut'), '#222222', 'Moderate'),
-       (get_futhark_results('bfast-futhark/bfast-unopt.json', 'bfast-unopt.fut'), '#444444', 'Unoptimized'),
-       (get_futhark_results('bfast-futhark/bfast-fused.json', 'bfast-fused.fut'), '#666666', 'Fused'),
+datas=[(get_futhark_results('bfast-futhark/bfast-ours.json', 'bfast-ours.fut'), '#000000', 'Ours'),
+       (get_futhark_results('bfast-futhark/bfast-RegTl-EfSeq.json', 'bfast-RegTl-EfSeq.fut'), '#222222', 'RgTl-EfSeq'),
+       (get_futhark_results('bfast-futhark/bfast-All-EfSeq.json', 'bfast-All-EfSeq.fut'), '#444444', 'BkTl-EfSeq'),
+       (get_futhark_results('bfast-futhark/bfast-BlkTl-EfSeq.json', 'bfast-BlkTl-EfSeq.fut'), '#666666', 'Full-EfSeq'),
        (get_c_results(), '#bbbbbb', 'C')]
 
 plt.figure(figsize=(6,2))
@@ -63,18 +63,17 @@ for ((data, color, name), i) in zip(datas, range(len(datas))):
                    align='center',
                    label=name)
 
-    ymin, ymax = plt.ylim()
-
-    if i == 0:
-        for (r, x) in zip(rects, data):
-            plt.text(r.get_x()+width*len(datas)/2, -ymax/4,
-                     "$%.2fms$" % (x['runtime']*1000),
-                     ha='center', va='baseline', weight='bold')
-
 ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(datasets)
-ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.25), framealpha=1)
-plt.ylabel('GFLOPS')
+
+ymin, ymax = plt.ylim()
+for (x, data) in zip(ax.get_xticks(), datas[0][0]):
+    ax.text(x, -ymax/4,
+            "$%.2fms$" % (data['runtime']*1000),
+            ha='center', va='baseline', weight='bold')
+
+ax.legend(loc='upper center', ncol=len(datas), bbox_to_anchor=(0.5, 1.3), framealpha=1)
+plt.ylabel('$GFLOPS^{Sp}$')
 
 if len(sys.argv) > 1:
     plt.savefig(sys.argv[1], bbox_inches='tight')
