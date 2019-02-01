@@ -2,14 +2,13 @@
 --   case of the batched matrix-matrix multiplication kernel of bfast.
 --   It works directly with bfast's datasets.
 -- ==
--- compiled input @ ../../data/sahara.in.gz
--- compiled input @ ../../data/peru.in.gz
--- compiled input @ ../../data/d-16384-1024-512.in.gz
--- compiled input @ ../../data/d-16384-512-256.in.gz
--- compiled input @ ../../data/d-32768-256-128.in.gz
--- compiled input @ ../../data/d-32768-512-256.in.gz
--- compiled input @ ../../data/d-65536-128-64.in.gz
--- compiled input @ ../../data/d-65536-256-128.in.gz
+-- compiled input @ data/d-16384-1024-512.in.gz
+-- compiled input @ data/d-16384-512-256.in.gz
+-- compiled input @ data/d-32768-512-256.in.gz
+-- compiled input @ data/d-32768-256-128.in.gz
+-- compiled input @ data/d-65536-256-128.in.gz
+-- compiled input @ data/d-16384-1024-256.in.gz
+-- compiled input @ data/peru.in.gz
 
 
 -- | builds the X matrices; first result dimensions of size 2*k+2
