@@ -173,8 +173,9 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
       let sigma = f32.sqrt ( sigma0 / (r32 (n' - k2p2)) )
       let h     = t32 ( (r32 n') * hfrac )
       -- last kernel
-      let MO_fst = map (\i -> unsafe y_error[i+n'-h+1]) (unsafe (iota h))
-                  |> reduce (+) 0.0
+      let MO_fst =
+        loop (acc) = (0.0) for i < h do
+          acc + unsafe y_error[i+n'-h+1]
 
       let (fst_break, mean, _) = 
         loop (fst_break, mean, mo) = (-1,0.0,0.0)
