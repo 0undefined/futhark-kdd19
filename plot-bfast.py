@@ -44,8 +44,8 @@ def get_c_results():
 
 datas=[(get_futhark_results('bfast-futhark/bfast-ours.json', 'bfast-ours.fut'), '#000000', 'Ours'),
        (get_futhark_results('bfast-futhark/bfast-RegTl-EfSeq.json', 'bfast-RegTl-EfSeq.fut'), '#222222', 'RgTl-EfSeq'),
-       (get_futhark_results('bfast-futhark/bfast-All-EfSeq.json', 'bfast-All-EfSeq.fut'), '#444444', 'BkTl-EfSeq'),
-       (get_futhark_results('bfast-futhark/bfast-BlkTl-EfSeq.json', 'bfast-BlkTl-EfSeq.fut'), '#666666', 'Full-EfSeq'),
+       (get_futhark_results('bfast-futhark/bfast-BlkTl-EfSeq.json', 'bfast-BlkTl-EfSeq.fut'), '#444444', 'BkTl-EfSeq'),
+       (get_futhark_results('bfast-futhark/bfast-All-EfSeq.json', 'bfast-All-EfSeq.fut'), '#666666', 'Full-EfSeq'),
        (get_c_results(), '#bbbbbb', 'C')]
 
 plt.figure(figsize=(6,2))
@@ -72,7 +72,7 @@ ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(datasets)
 
 for (x, data) in zip(ax.get_xticks(), datas[0][0]):
-    ax.text(x, -ymax/4,
+    ax.text(x, -ymax/3,
             "$%.2fms$" % (data['runtime']*1000),
             ha='center', va='baseline', weight='bold')
 

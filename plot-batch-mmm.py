@@ -62,7 +62,7 @@ ax.set_xticks(ind+width*(len(datas)-1)/2.0)
 ax.set_xticklabels(datasets)
 
 for (x, data) in zip(ax.get_xticks(), datas[0][0]):
-    ax.text(x, -ymax/4,
+    ax.text(x, -ymax/3,
             "$%.2fms$" % (data['runtime']*1000),
             ha='center', va='baseline', weight='bold')
 
