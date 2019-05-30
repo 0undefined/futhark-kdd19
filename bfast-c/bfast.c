@@ -1,4 +1,4 @@
-#define RUNS_CPU 10
+#define RUNS_CPU 20
 
 #include "bfast.h"
 
