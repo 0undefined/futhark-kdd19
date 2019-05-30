@@ -94,8 +94,13 @@ let dotprod [n] (xs: [n]f32) (ys: [n]f32): f32 =
 let matvecmul_row [n][m] (xss: [n][m]f32) (ys: [m]f32) =
   map (dotprod ys) xss
 
+-- | dot-product but in which we filter-out the entries for which `vct[i]==NAN`
 let dotprod_filt [n] (vct: [n]f32) (xs: [n]f32) (ys: [n]f32) : f32 =
-  f32.sum (map3 (\i x y -> x * y * if (f32.isnan (vct[i])) then 0.0 else 1.0) (iota n) xs ys)
+  f32.sum (map3 (\i x y -> let z = intrinsics.opaque(0) in
+                           x * y * if (f32.isnan (unsafe vct[i+z]))
+                                   then 0.0 else 1.0
+                ) (iota n) xs ys
+          )
 
 let matvecmul_row_filt [n][m] (xss: [n][m]f32) (ys: [m]f32) =
     map (\xs -> map2 (\x y -> if (f32.isnan y) then 0 else x*y) xs ys |> f32.sum) xss

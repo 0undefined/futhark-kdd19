@@ -25,7 +25,7 @@ let mkX_with_trend [N] (k2p2: i32) (f: f32) (mappingindices: [N]i32): [k2p2][N]f
 
 -- | dot-product but in which we filter-out the entries for which `vct[i]==NAN`
 let dotprod_filt [n] (vct: [n]f32) (xs: [n]f32) (ys: [n]f32) : f32 =
-  loop (s) = (0) for i < n do
+  loop (s) = (0.0) for i < n do
     s + xs[i] * ys[i] * if (f32.isnan (vct[i])) then 0.0 else 1.0
 
 -- | matrix-matrix multiplication but with NAN-filtering on `vct`

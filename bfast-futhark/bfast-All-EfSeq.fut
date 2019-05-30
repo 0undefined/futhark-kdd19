@@ -97,7 +97,8 @@ let matvecmul_row [n][m] (xss: [n][m]f32) (ys: [m]f32) =
   map (dotprod ys) xss
 
 let dotprod_filt [n] (vct: [n]f32) (xs: [n]f32) (ys: [n]f32) : f32 =
-  f32.sum (map3 (\v x y -> x * y * if (f32.isnan v) then 0.0 else 1.0) vct xs ys)
+  loop (s) = (0.0) for i < n do
+    s + xs[i] * ys[i] * if (f32.isnan (vct[i])) then 0.0 else 1.0
 
 let matvecmul_row_filt [n][m] (xss: [n][m]f32) (ys: [m]f32) =
     map (\xs -> map2 (\x y -> if (f32.isnan y) then 0 else x*y) xs ys |> f32.sum) xss
