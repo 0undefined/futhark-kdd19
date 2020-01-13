@@ -9,6 +9,7 @@
 -- compiled input @ ../../data/D5.in.gz
 -- compiled input @ ../../data/D6.in.gz
 -- compiled input @ ../../data/peru.in.gz
+-- compiled input @ ../../data/africa.in.gz
 
 
 -- | builds the X matrices; first result dimensions of size 2*k+2

@@ -132,30 +132,35 @@ void invert(float** src, float** dst, int n, int batchSize)
       C[i] = C[i-1] + (n*n);
     cudacall(cudaMemcpy(C_d,C,batchSize*sizeof(float *),cudaMemcpyHostToDevice));
 
-    cudaDeviceSynchronize();
-    int64_t elapsed, aft, bef = get_wall_time();
-    cudacall(cudaMalloc(&P, n * batchSize * sizeof(int)));
-    cudacall(cudaMalloc(&INFO,  batchSize * sizeof(int)));
-    
-    cublascall(cublasSgetrfBatched(handle,n,A_d,lda,P,INFO,batchSize));
-    
-    cublascall(cublasSgetriBatched(handle,n,(const float **)A_d,lda,P,C_d,lda,INFO,batchSize));
-    cudaDeviceSynchronize();
-
-    aft = get_wall_time();
-    elapsed = aft - bef;
-    printf("%ldμs\n", elapsed);
-
     int INFOh[batchSize];
-    cudacall(cudaMemcpy(INFOh,INFO,batchSize*sizeof(int),cudaMemcpyDeviceToHost));
 
-    for (int i = 0; i < batchSize; i++)
-      if(INFOh[i]  != 0)
-      {
-        fprintf(stderr, "Factorization of matrix %d Failed: Matrix may be singular\n", i);
-        cudaDeviceReset();
-        exit(EXIT_FAILURE);
-      }
+
+    {
+        cudaDeviceSynchronize();
+        int64_t elapsed, aft, bef = get_wall_time();
+        cudacall(cudaMalloc(&P, n * batchSize * sizeof(int)));
+        cudacall(cudaMalloc(&INFO,  batchSize * sizeof(int)));
+    
+        cublascall(cublasSgetrfBatched(handle,n,A_d,lda,P,INFO,batchSize));
+#if 0
+        cudacall(cudaMemcpy(INFOh,INFO,batchSize*sizeof(int),cudaMemcpyDeviceToHost));
+
+        for (int i = 0; i < batchSize; i++) {
+            if(INFOh[i]  != 0)
+            {
+                fprintf(stderr, "Factorization of matrix %d Failed: Matrix may be singular\n", i);
+                cudaDeviceReset();
+                exit(EXIT_FAILURE);
+            }
+        }
+#endif        
+        cublascall(cublasSgetriBatched(handle,n,(const float **)A_d,lda,P,C_d,lda,INFO,batchSize));
+        cudaDeviceSynchronize();
+
+        aft = get_wall_time();
+        elapsed = aft - bef;
+        printf("%ldμs\n", elapsed);
+    }
 
 
     cudacall(cudaMemcpy(INFOh,INFO,batchSize*sizeof(int),cudaMemcpyDeviceToHost));

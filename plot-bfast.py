@@ -16,7 +16,8 @@ datasets = ['peru',
             'D3',
             'D4',
             'D5',
-            'D6']
+            'D6',
+            'africa']
 
 def get_num_ops(dataset):
     return int(open('bfast-futhark/{}.ops'.format(dataset)).read().splitlines()[0])

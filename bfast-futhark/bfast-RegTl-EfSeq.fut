@@ -7,6 +7,7 @@
 -- compiled input @ data/D5.in.gz
 -- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
+-- compiled input @ data/africa.in.gz
 
 -- output @ data/peru.out.gz
 -- compiled input @ data/sahara.in.gz
