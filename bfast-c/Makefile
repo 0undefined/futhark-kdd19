@@ -1,6 +1,6 @@
 PROGRAMS=bfast
 INCLUDES=bfast.h
-DATASETS=D1 D2 D3 D4 D5 D6 peru
+DATASETS=D1 D2 D3 D4 D5 D6 peru africa
 
 # Generic Makefile definitions.  Import from a Makefile, and be
 # careful if changing it here.
@@ -36,6 +36,9 @@ D6.runtime:
 
 peru.runtime:
 	./bfast 111556 235 113 0.689226 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
+
+africa.runtime:
+	./bfast 589824 327 160 0.913 | tee /dev/stdout | tail -n 1 | sed s/μs// > $@
 
 .PHONY: clean
 

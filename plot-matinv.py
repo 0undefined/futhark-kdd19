@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 datasets = ['peru-Xsqr',
             'D1-Xsqr',
             'D3-Xsqr',
-            'D5-Xsqr']
+            'D5-Xsqr',
+            'africa-Xsqr']
 
 def get_num_ops(dataset):
     return int(open('bfast-futhark/{}.ops'.format(dataset.replace('-Xsqr', ''))).read().splitlines()[2])

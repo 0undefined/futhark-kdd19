@@ -16,3 +16,4 @@ matinv-cublas: mat-inv.cu
 	./matinv-cublas 32768 8
 	./matinv-cublas 65536 8
 	./matinv-cublas 111556 8
+	./matinv-cublas 589824 8

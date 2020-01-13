@@ -5,6 +5,8 @@
 -- compiled input @ ../../data/D3-Xsqr.in.gz
 -- compiled input @ ../../data/D5-Xsqr.in.gz
 -- compiled input @ ../../data/peru-Xsqr.in.gz
+-- compiled input @ ../../data/africa-Xsqr.in.gz
+
 -- compiled input @ ../../data/sahara-Xsqr.in.gz
 
 let gauss_jordan [nm] (n:i32) (m:i32) (A: *[nm]f32): [nm]f32 =
