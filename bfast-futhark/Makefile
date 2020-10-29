@@ -1,6 +1,6 @@
 DEVICE?=\#0 # If you wish, set the OpenCL device to use.
 DATASETS=D1 D2 D3 D4 D5 D6 peru africa
-GPU_RUNS=200
+GPU_RUNS=600
 all: bfast-ours.json bfast-RegTl-EfSeq.json bfast-BlkTl-EfSeq.json bfast-All-EfSeq.json $(DATASETS:=.ops)
 
 FUTHARK=futhark-0.11.2-linux-x86_64/bin/futhark
