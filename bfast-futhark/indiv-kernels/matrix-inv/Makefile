@@ -2,7 +2,7 @@ DEVICE?=\#0 # If you wish, set the OpenCL device to use.
 
 FUTHARK=../../futhark-0.11.2-linux-x86_64/bin/futhark
 
-CUDA=/usr/local/cuda-10.0/
+CUDA=/usr/local/cuda/
 
 all: matinv-glob-mem.json matinv-fast-mem.json $(DATASETS:=.ops)
 

@@ -2,7 +2,7 @@
 --   case of the batched matrix-matrix multiplication kernel of bfast.
 --   It works directly with bfast's datasets.
 -- ==
--- compiled input @ ../../data/D1.in.gz
+-- compiled input @ ../../data/D1.in.gz auto output
 -- compiled input @ ../../data/D2.in.gz
 -- compiled input @ ../../data/D3.in.gz
 -- compiled input @ ../../data/D4.in.gz

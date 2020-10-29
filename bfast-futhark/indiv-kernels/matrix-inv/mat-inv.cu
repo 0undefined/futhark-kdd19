@@ -32,6 +32,14 @@
     while(0)
 
 
+__global__ void
+writeShapeKernel(float** Ashp, float* Aflat, int n, int M) {
+    const unsigned int gid = blockIdx.x*blockDim.x + threadIdx.x;
+    if(gid < M) {
+        Ashp[gid] = Aflat + gid*n*n;
+    }
+}
+
 static int64_t get_wall_time(void) {
   struct timeval time;
   gettimeofday(&time,NULL);
@@ -140,7 +148,11 @@ void invert(float** src, float** dst, int n, int batchSize)
         int64_t elapsed, aft, bef = get_wall_time();
         cudacall(cudaMalloc(&P, n * batchSize * sizeof(int)));
         cudacall(cudaMalloc(&INFO,  batchSize * sizeof(int)));
-    
+
+        const unsigned int block_size = 256;
+        const unsigned int num_blocks = (batchSize + block_size - 1) / block_size;
+        
+        writeShapeKernel<<<num_blocks,block_size>>>(A_d, A_dflat, n, batchSize);
         cublascall(cublasSgetrfBatched(handle,n,A_d,lda,P,INFO,batchSize));
 #if 0
         cudacall(cudaMemcpy(INFOh,INFO,batchSize*sizeof(int),cudaMemcpyDeviceToHost));
@@ -154,6 +166,7 @@ void invert(float** src, float** dst, int n, int batchSize)
             }
         }
 #endif        
+        writeShapeKernel<<<num_blocks,block_size>>>(C_d, C_dflat, n, batchSize);
         cublascall(cublasSgetriBatched(handle,n,(const float **)A_d,lda,P,C_d,lda,INFO,batchSize));
         cudaDeviceSynchronize();
 
