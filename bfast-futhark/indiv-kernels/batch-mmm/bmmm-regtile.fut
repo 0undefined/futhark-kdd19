@@ -13,7 +13,7 @@
 
 
 -- | builds the X matrices; first result dimensions of size 2*k+2
-let mkX_with_trend [N] (k2p2: i32) (f: f32) (mappingindices: [N]i32): [k2p2][N]f32 =
+let mkX_with_trend [N] (k2p2: i64) (f: f32) (mappingindices: [N]i32): [k2p2][N]f32 =
   map (\ i ->
         map (\ind ->
                 if i == 0 then 1f32
@@ -23,7 +23,7 @@ let mkX_with_trend [N] (k2p2: i32) (f: f32) (mappingindices: [N]i32): [k2p2][N]f
                      in  if i % 2 == 0 then f32.sin angle 
                                        else f32.cos angle
             ) mappingindices
-      ) (iota k2p2)
+      ) (map i32.i64 (iota k2p2))
 
 -- | dot-product but in which we filter-out the entries for which `vct[i]==NAN`
 let dotprod_filt [n] (vct: [n]f32) (xs: [n]f32) (ys: [n]f32) : f32 =
@@ -39,10 +39,11 @@ entry main [m][N] (_trend: i32) (k: i32) (n: i32) (freq: f32)
                   (_hfrac: f32) (_lam: f32)
                   (mappingindices : [N]i32)
                   (images : [m][N]f32) =
+  let n = i64.i32 n
   ----------------------------------
   -- 1. make interpolation matrix --
   ----------------------------------
-  let k2p2 = 2*k + 2
+  let k2p2 = i64.i32 (2*k + 2)
   let X = mkX_with_trend k2p2 freq (mappingindices[:n])
   let Xt= copy (transpose X)
   
