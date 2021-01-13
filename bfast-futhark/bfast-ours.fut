@@ -1,5 +1,9 @@
 -- BFAST-irregular: version handling obscured observations (e.g., clouds)
 -- ==
+-- compiled input @ data/peru.in.gz
+
+-- compiled input @ data/sahara.in.gz
+-- output @ data/sahara.out.gz
 -- compiled input @ data/D1.in.gz
 -- compiled input @ data/D2.in.gz
 -- compiled input @ data/D3.in.gz
@@ -7,11 +11,13 @@
 -- compiled input @ data/D5.in.gz
 -- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
+
+-- compiled input @ data/sahara.in.gz
+-- output @ data/sahara.out.gz
+
 -- compiled input @ data/africa.in.gz
 
 -- output @ data/peru.out.gz
--- compiled input @ data/sahara.in.gz
--- output @ data/sahara.out.gz
 
 let logplus (x: f32) : f32 =
   if x > (f32.exp 1)
@@ -62,19 +68,47 @@ let mkX_no_trend [N] (k2p2m1: i64) (f: f32) (mappingindices: [N]i32): [k2p2m1][N
 -- with intra-blockparallelism                   --
 ---------------------------------------------------
 
-  let gauss_jordan [nm] (n:i32) (m:i32) (A: *[nm]f32): [nm]f32 =
-    loop A for i < n do
-      let v1 = A[i]
+--  let gauss_jordan [nm] (n:i32) (m:i32) (A: *[nm]f32): [nm]f32 =
+--    loop A for i < n do
+--      let v1 = A[i]
+--      let A' = map (\ind -> let (k, j) = (ind / m, ind % m)
+--                            in if v1 == 0.0 then #[unsafe] A[k*m+j] else
+--                            let x = #[unsafe] (A[j] / v1) in
+--                                if k < n-1  -- Ap case
+--                                then #[unsafe] ( A[(k+1)*m+j] - A[(k+1)*m+i] * x )
+--                                else x      -- irow case
+--                   ) (map i32.i64 (iota nm))
+--      in  scatter A (iota nm) A'
+--
+--  let mat_inv [n] (A: [n][n]f32): [n][n]f32 =
+--    let m = 2*n
+--    let nm= n*m
+--    -- Pad the matrix with the identity matrix.
+--    let Ap = map (\ind -> let (i, j) = (ind / m, ind % m)
+--                          in  if j < n then #[unsafe] ( A[i,j] )
+--                                       else if j == n+i
+--                                            then 1.0
+--                                            else 0.0
+--                 ) (iota nm)
+--    let Ap' = gauss_jordan (i32.i64 n) (i32.i64 m) Ap
+--    -- Drop the identity matrix at the front!
+--    in (unflatten n m Ap')[0:n,n:2*n] :> [n][n]f32
+--
+
+let gauss_jordan [nm] (n:i32) (m:i32) (A: *[nm]f32): [nm]f32 =
+  loop A for i < n do
+      let v1 = #[unsafe] A[i64.i32 i]
       let A' = map (\ind -> let (k, j) = (ind / m, ind % m)
-                            in if v1 == 0.0 then #[unsafe] A[k*m+j] else
-                            let x = #[unsafe] (A[j] / v1) in
+                            in if v1 == 0.0 then #[unsafe] A[i64.i32(k*m+j)] else
+                            let x = #[unsafe] (A[i64.i32(j)] / v1) in
                                 if k < n-1  -- Ap case
-                                then #[unsafe] ( A[(k+1)*m+j] - A[(k+1)*m+i] * x )
+                                then #[unsafe] ( A[i64.i32((k+1)*m+j)] - A[i64.i32((k+1)*m+i)] * x )
                                 else x      -- irow case
                    ) (map i32.i64 (iota nm))
       in  scatter A (iota nm) A'
 
-  let mat_inv [n] (A: [n][n]f32): [n][n]f32 =
+let mat_inv [n0] (A: [n0][n0]f32): [n0][n0]f32 =
+    let n = i32.i64 n0
     let m = 2*n
     let nm= n*m
     -- Pad the matrix with the identity matrix.
@@ -83,10 +117,11 @@ let mkX_no_trend [N] (k2p2m1: i64) (f: f32) (mappingindices: [N]i32): [k2p2m1][N
                                        else if j == n+i
                                             then 1.0
                                             else 0.0
-                 ) (iota nm)
-    let Ap' = gauss_jordan (i32.i64 n) (i32.i64 m) Ap
+                 ) (map i32.i64 (iota (i64.i32 nm)))
+    let Ap' = gauss_jordan n m Ap
     -- Drop the identity matrix at the front!
-    in (unflatten n m Ap')[0:n,n:2*n] :> [n][n]f32
+    in (unflatten (i64.i32 n) (i64.i32 m) Ap')[0:(i64.i32 n),(i64.i32 n): i64.i32 (2*n)] :> [n0][n0]f32
+
 --------------------------------------------------
 --------------------------------------------------
 
