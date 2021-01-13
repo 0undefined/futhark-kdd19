@@ -214,9 +214,9 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
   -- 6. ns and sigma (can be fused with above)  --
   ------------------------------------------------
   let (hs, nss, sigmas) = opaque <| unzip3 <|
-    map2 (\yh y_error ->
+    map2 (\yh y_error : (i32,i32,f32) ->
             let ns    = map (\ye -> if !(f32.isnan ye) then 1i32 else 0) yh
-                        |> reduce (+) 0
+                        |> reduce (+) 0i32
             let sigma = map (\i -> if i < i64.i32 ns then #[unsafe] y_error[i] else 0.0) (iota n)
                         |> map (\ a -> a*a ) |> reduce (+) 0.0
             let sigma = f32.sqrt ( sigma / (r32 (ns-k2p2)) )
@@ -229,8 +229,8 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
   ---------------------------------------------
   let hmax = i64.i32 (reduce_comm (i32.max) 0 hs)
   let MO_fsts = zip3 y_errors nss hs |>
-    map (\(y_error, ns, h) -> #[unsafe]
-            map (\i -> if i < h then #[unsafe] y_error[i + ns-h+1] else 0.0) (map i32.i64 (iota hmax))
+    map (\(y_error, ns : i32, h: i32) -> #[unsafe]
+            map (\(i :i32)  -> if i < h then #[unsafe] y_error[i64.i32 (i + ns-h+1i32)] else 0.0) (map i32.i64 (iota hmax))
             |> reduce (+) 0.0 
         ) |> opaque
 
@@ -244,31 +244,31 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
   -- 8. moving sums computation:             --
   ---------------------------------------------
   let (_MOs, _MOs_NN, breaks, means) = zip (zip4 Nss nss sigmas hs) (zip3 MO_fsts y_errors val_indss) |>
-    map (\ ( (Ns,ns,sigma, h), (MO_fst,y_error,val_inds) ) ->
-           let Nmn = N - n
-            let MO = map (\j -> if j >= Ns-ns then 0.0
-                                else if j == 0 then MO_fst
-                                else #[unsafe] (-y_error[ns-h+j] + y_error[ns+j])
-                         ) (map i32.i64 (iota (N-n))) |> scan (+) 0.0
+    map (\ ( (Ns:i32, ns:i32, sigma:f32, h:i32), (MO_fst,y_error,val_inds) ) ->
+          let Nmn = N - n
+          let MO = map (\(j:i32) -> if j >= Ns-ns then 0.0
+                                    else if j == 0i32 then MO_fst
+                                    else #[unsafe] (-y_error[ns-h+j] + y_error[ns+j])
+                       ) (map i32.i64 (iota (N-n))) |> scan (+) 0.0
 	    
-            let MO' = map (\mo -> mo / (sigma * (f32.sqrt (f32.i32 ns))) ) MO
+          let MO' = map (\mo -> mo / (sigma * (f32.sqrt (f32.i32 ns))) ) MO
 	        let (is_break, fst_break) = 
-		    map3 (\mo' b j ->  if j < Ns - ns && !(f32.isnan mo')
-				      then ( (f32.abs mo') > b, j )
-				      else ( false, j )
-		         ) MO' BOUND (map i32.i64 (indices BOUND))
+		        map3 (\mo' b (j:i32) ->  if j < Ns - ns && !(f32.isnan mo')
+				                             then ( (f32.abs mo') > b, j )
+				                             else ( false, j )
+		             ) MO' BOUND (map i32.i64 (indices BOUND))
 		        |> reduce (\ (b1,i1) (b2,i2) -> 
                                 if b1 then (b1,i1) 
                                 else if b2 then (b2, i2)
                                 else (b1,i1) 
-              	      	     ) (false, -1)
+              	      ) (false, -1i32)
 	        let mean = map2 (\x j -> if j < Ns - ns then x else 0.0 ) MO' (map i32.i64 (iota (N-n)))
-			    |> reduce (+) 0.0
+			            |> reduce (+) 0.0
 
-	        let fst_break' = if !is_break then -1
-                             else let adj_break = adjustValInds (i32.i64 n) ns Ns val_inds fst_break
-                                  in  ((adj_break-1) / 2) * 2 + 1  -- Cosmin's validation hack
-            let fst_break' = if ns <=5 || Ns-ns <= 5 then -2 else fst_break'
+	        let fst_break' =  if !is_break then -1i32
+                            else let adj_break = adjustValInds (i32.i64 n) ns Ns val_inds fst_break
+                                 in  ((adj_break-1) / 2) * 2 + 1  -- Cosmin's validation hack
+          let fst_break' = if ns <=5 || Ns-ns <= 5 then -2i32 else fst_break'
 
             let val_inds' = map (adjustValInds (i32.i64 n) ns Ns val_inds) (map i32.i64 (iota (N-n)))
             let MO'' = scatter (replicate (N-n) f32.nan) (map i64.i32 val_inds') MO'
