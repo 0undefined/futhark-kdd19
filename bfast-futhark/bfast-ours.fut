@@ -1,6 +1,6 @@
 -- BFAST-irregular: version handling obscured observations (e.g., clouds)
 -- ==
--- compiled input @ data/peru.in.gz
+-- compiled input @ data/peru.in
 
 -- compiled input @ data/sahara.in.gz
 -- output @ data/sahara.out.gz
@@ -19,11 +19,13 @@
 
 -- output @ data/peru.out.gz
 
-let isnan32 (x: f32) =
-  let x = f32.to_bits x
-  let exponent = (x >> 23) & 0b11111111
-  let significand = x & 0b11111111111111111111111
-  in exponent == 0b11111111 && significand != 0 
+let isnan32new (x: f32) = f32.isnan x
+
+--let isnan32new (x: f32) = 
+--  let x = f32.to_bits x
+--  let exponent = (x >> 23) & 0b11111111
+--  let significand = x & 0b11111111111111111111111
+--  in exponent == 0b11111111 && significand != 0 
 
 let logplus (x: f32) : f32 =
   if x > (f32.exp 1)
@@ -138,10 +140,10 @@ let matvecmul_row [n][m] (xss: [n][m]f32) (ys: [m]f32) =
   map (dotprod ys) xss
 
 let dotprod_filt [n] (vct: [n]f32) (xs: [n]f32) (ys: [n]f32) : f32 =
-  f32.sum (map3 (\v x y -> x * y * if (isnan32 v) then 0.0 else 1.0) vct xs ys)
+  f32.sum (map3 (\v x y -> x * y * if (isnan32new v) then 0.0 else 1.0) vct xs ys)
 
 let matvecmul_row_filt [n][m] (xss: [n][m]f32) (ys: [m]f32) =
-    map (\xs -> map2 (\x y -> if (isnan32 y) then 0 else x*y) xs ys |> f32.sum) xss
+    map (\xs -> map2 (\x y -> if (isnan32new y) then 0 else x*y) xs ys |> f32.sum) xss
 
 let matmul_filt [n][p][m] (xss: [n][p]f32) (yss: [p][m]f32) (vct: [p]f32) : [n][m]f32 =
   map (\xs -> map (dotprod_filt vct xs) (transpose yss)) xss
@@ -209,9 +211,9 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
   let (Nss, y_errors, val_indss) = ( opaque <| unzip3 <|
     map2 (\y y_pred ->
             let y_error_all = zip y y_pred |>
-                map (\(ye,yep) -> if !(isnan32 ye) 
+                map (\(ye,yep) -> if !(isnan32new ye) 
                                   then ye-yep else f32.nan )
-            let (tups, Ns) = filterPadWithKeys (\y -> !(isnan32 y)) (f32.nan) y_error_all
+            let (tups, Ns) = filterPadWithKeys (\y -> !(isnan32new y)) (f32.nan) y_error_all
             let (y_error, val_inds) = unzip tups
             in  (Ns, y_error, val_inds)
          ) images y_preds )
@@ -221,7 +223,7 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
   ------------------------------------------------
   let (hs, nss, sigmas) = opaque <| unzip3 <|
     map2 (\yh y_error : (i32,i32,f32) ->
-            let ns    = map (\ye -> if !(isnan32 ye) then 1i32 else 0) yh
+            let ns    = map (\ye -> if !(isnan32new ye) then 1i32 else 0) yh
                         |> reduce (+) 0i32
             let sigma = map (\i -> if i < i64.i32 ns then #[unsafe] y_error[i] else 0.0) (iota n)
                         |> map (\ a -> a*a ) |> reduce (+) 0.0
@@ -259,7 +261,7 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
 	    
           let MO' = map (\mo -> mo / (sigma * (f32.sqrt (f32.i32 ns))) ) MO
 	        let (is_break, fst_break) = 
-		        map3 (\mo' b (j:i32) ->  if j < Ns - ns && !(isnan32 mo')
+		        map3 (\mo' b (j:i32) ->  if j < Ns - ns && !(isnan32new mo')
 				                             then ( (f32.abs mo') > b, j )
 				                             else ( false, j )
 		             ) MO' BOUND (map i32.i64 (indices BOUND))
