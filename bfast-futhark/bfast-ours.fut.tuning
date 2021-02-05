@@ -14,3 +14,5 @@ main.suff_outer_par_30=16384
 main.suff_outer_par_6=2000000000
 main.suff_outer_par_7=2000000000
 main.suff_outer_par_8=1048576
+default_tile_size=8
+default_reg_tile_size=3

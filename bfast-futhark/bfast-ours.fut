@@ -1,9 +1,5 @@
 -- BFAST-irregular: version handling obscured observations (e.g., clouds)
 -- ==
--- compiled input @ data/peru.in
-
--- compiled input @ data/sahara.in.gz
--- output @ data/sahara.out.gz
 -- compiled input @ data/D1.in.gz
 -- compiled input @ data/D2.in.gz
 -- compiled input @ data/D3.in.gz
@@ -11,13 +7,11 @@
 -- compiled input @ data/D5.in.gz
 -- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
+-- output @ data/peru.out.gz
+-- compiled input @ data/africa.in.gz 
+-- output @ data/africa.out.gz
 
 -- compiled input @ data/sahara.in.gz
--- output @ data/sahara.out.gz
-
--- compiled input @ data/africa.in.gz
-
--- output @ data/peru.out.gz
 
 let isnan32new (x: f32) = f32.isnan x
 
@@ -262,7 +256,9 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
           let MO' = map (\mo -> mo / (sigma * (f32.sqrt (f32.i32 ns))) ) MO
 	        let (is_break, fst_break) = 
 		        map3 (\mo' b (j:i32) ->  if j < Ns - ns && !(isnan32new mo')
-				                             then ( (f32.abs mo') > b, j )
+				                             -- Validation hack 1: increased break-detection threshold
+                                             then ( (f32.abs mo') > 1.0001f32 * b, j )
+                                             -- then ( (f32.abs ((f32.abs mo') - b)) > 0.0001, j)
 				                             else ( false, j )
 		             ) MO' BOUND (map i32.i64 (indices BOUND))
 		        |> reduce (\ (b1,i1) (b2,i2) -> 
@@ -273,9 +269,10 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
 	        let mean = map2 (\x j -> if j < Ns - ns then x else 0.0 ) MO' (map i32.i64 (iota (N-n)))
 			            |> reduce (+) 0.0
 
-	        let fst_break' =  if !is_break then -1i32
-                            else let adj_break = adjustValInds (i32.i64 n) ns Ns val_inds fst_break
-                                 in  ((adj_break-1) / 2) * 2 + 1  -- Cosmin's validation hack
+	        let fst_break' = if !is_break then -1i32
+                             else let adj_break = adjustValInds (i32.i64 n) ns Ns val_inds fst_break
+                                  -- Validation hack 2: nearby indices are ok to be confused:
+                                  in  ((adj_break-1) / 2) * 2 + 1
           let fst_break' = if ns <=5 || Ns-ns <= 5 then -2i32 else fst_break'
 
             let val_inds' = map (adjustValInds (i32.i64 n) ns Ns val_inds) (map i32.i64 (iota (N-n)))
@@ -284,11 +281,4 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
         ) |> unzip4
 
   in (breaks, means)
-
-
--- For Fabian: with debugging info, replace the result with the next line
---in (MO_fsts, Nss, nss, sigmas, _MOs, _MOs_NN, BOUND, breaks, means, y_errors, y_preds)
-
--- gcc -O2 --std=c99 bfast-cloudy-wip.c -lOpenCL -lm
--- FUTHARK_INCREMENTAL_FLATTENING=1 ~/WORK/gits/futhark/tools/futhark-autotune --compiler=futhark-opencl --pass-option=--default-tile-size=8 --stop-after 1500 --calc-timeout bfast-cloudy-wip.fut --compiler=futhark-opencl
 
