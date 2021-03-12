@@ -2,6 +2,7 @@
 -- multiplication are kept separate (otherwise performance is awaful), the remaining
 -- steps up to and including the calculation of "hmax" is fused in one kernel.
 -- ==
+--
 -- compiled input @ data/D1.in.gz
 -- compiled input @ data/D2.in.gz
 -- compiled input @ data/D3.in.gz
@@ -9,7 +10,9 @@
 -- compiled input @ data/D5.in.gz
 -- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
--- compiled input @ data/africa.in.gz
+-- output @ data/peru.out.gz
+-- compiled input @ data/africa.in.gz 
+-- output @ data/africa.out.gz
 
 -- compiled input @ data/sahara.in.gz
 -- output @ data/sahara.out.gz
@@ -186,7 +189,8 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
                               else unsafe (-y_error[n'-h+i] + y_error[n'+i])
             let mo = mo + elm
             let mo' = mo / (sigma * (f32.sqrt (r32 n')))
-            let fst_break = if (fst_break == -1) && !(f32.isnan mo') && ((f32.abs mo') > unsafe BOUND[i])
+            let fst_break = if (fst_break == -1) && !(f32.isnan mo') &&
+                               ((f32.abs mo') > 1.0001f32 * b)
                             then i else fst_break
             in  (fst_break, mean + mo', mo)
 
