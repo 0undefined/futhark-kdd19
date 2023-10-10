@@ -1,5 +1,10 @@
 # futhark-kdd19
 
+This repository has updated implementations of the bfast algorithm, updated to
+work with newer futhark compiler versions.
+
+Forked from [diku-dk](https://github.com/diku-dk/futhark-kdd19)
+
 ## Bfast Performance Evaluation
 
 Folder `bfast-c` contains a OpenMP-parallelized CPU version of bfast; the code was carefully written to be in a good form for vectorization, but it is ultimately up to gcc to extract it, i.e., no vectorization intrinsics have been used. The datasets are generated internally.
@@ -60,13 +65,13 @@ $ futhark bench --backend opencl --pass-option --default-tile-size=8 bmmm-blktil
 
 ---
 `$ FUTHARK_INCREMENTAL_FLATTENING=1 futhark bench --backend opencl --pass-option --size=main.suff_intra_par_1=1 matinv.fut`
---- 
+---
 
 ## (II) C + OpenMP Code for Bfast (Whole) Program
 
 This is implemented in folder `bfast-c`. The program creates its dataset internally, and requires the same parameters as `gen-data.fut`, namely, in order:
 
-* an integer denoting the number of pixels in the image (`M`), 
-* an integer denoting the length of the data series (`N`), 
-* an integer denoting the number of pixels used for training (`n`), 
+* an integer denoting the number of pixels in the image (`M`),
+* an integer denoting the length of the data series (`N`),
+* an integer denoting the number of pixels used for training (`n`),
 * a float denoting the fraction of `NaN` values (`nanfreq`).
