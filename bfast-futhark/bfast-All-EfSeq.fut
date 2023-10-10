@@ -11,7 +11,7 @@
 -- compiled input @ data/D6.in.gz
 -- compiled input @ data/peru.in.gz
 -- output @ data/peru.out.gz
--- compiled input @ data/africa.in.gz 
+-- compiled input @ data/africa.in.gz
 -- output @ data/africa.out.gz
 
 -- compiled input @ data/sahara.in.gz
@@ -22,41 +22,41 @@ let logplus (x: f32) : f32 =
   then f32.log x else 1
 
 let adjustValInds [N] (n : i32) (ns : i32) (Ns : i32) (val_inds : [N]i32) (ind: i32) : i32 =
-    if ind < Ns - ns then (unsafe val_inds[ind+ns]) - n else -1
+    if ind < Ns - ns then (#[unsafe] val_inds[ind+ns]) - n else -1
 
 let filterPadWithKeys [n] 't
            (p : (t -> bool))
-           (dummy : t)           
-           (arr : [n]t) : ([n](t,i32), i32) =
+           (dummy : t)
+           (arr : [n]t) : ([n](t,i64), i64) =
   let tfs = map (\a -> if p a then 1 else 0) arr
   let isT = scan (+) 0 tfs
   let i   = last isT
   let inds= map2 (\a iT -> if p a then iT-1 else -1) arr isT
   let rs  = scatter (replicate n dummy) inds arr
   let ks  = scatter (replicate n 0) inds (iota n)
-  in  (zip rs ks, i) 
+  in  (zip rs ks, i)
 
 -- | builds the X matrices; first result dimensions of size 2*k+2
-let mkX_with_trend [N] (k2p2: i32) (f: f32) (mappingindices: [N]i32): [k2p2][N]f32 =
+let mkX_with_trend [N] (k2p2: i64) (f: f32) (mappingindices: [N]i64): [k2p2][N]f32 =
   map (\ i ->
         map (\ind ->
                 if i == 0 then 1f32
-                else if i == 1 then r32 ind
-                else let (i', j') = (r32 (i / 2), r32 ind)
-                     let angle = 2f32 * f32.pi * i' * j' / f 
-                     in  if i % 2 == 0 then f32.sin angle 
+                else if i == 1 then r32 <| i32.i64 ind
+                else let (i', j') = (r32 <| i32.i64 (i / 2), r32 <| i32.i64 ind)
+                     let angle = 2f32 * f32.pi * i' * j' / f
+                     in  if i % 2 == 0 then f32.sin angle
                                        else f32.cos angle
             ) mappingindices
       ) (iota k2p2)
 
-let mkX_no_trend [N] (k2p2m1: i32) (f: f32) (mappingindices: [N]i32): [k2p2m1][N]f32 =
+let mkX_no_trend [N] (k2p2m1: i64) (f: f32) (mappingindices: [N]i64): [k2p2m1][N]f32 =
   map (\ i ->
         map (\ind ->
                 if i == 0 then 1f32
                 else let i = i + 1
-		     let (i', j') = (r32 (i / 2), r32 ind)
-                     let angle = 2f32 * f32.pi * i' * j' / f 
-                     in  if i % 2 == 0 then f32.sin angle 
+		     let (i', j') = (r32 <| i32.i64 (i / 2), r32 <| i32.i64 ind)
+                     let angle = 2f32 * f32.pi * i' * j' / f
+                     in  if i % 2 == 0 then f32.sin angle
                                        else f32.cos angle
             ) mappingindices
       ) (iota k2p2m1)
@@ -66,31 +66,30 @@ let mkX_no_trend [N] (k2p2m1: i32) (f: f32) (mappingindices: [N]i32): [k2p2m1][N
 -- with intra-blockparallelism                   --
 ---------------------------------------------------
 
-  let gauss_jordan [nm] (n:i32) (m:i32) (A: *[nm]f32): [nm]f32 =
+  let gauss_jordan [n][m] (A: *[n*m]f32): [n*m]f32 =
     loop A for i < n do
       let v1 = A[i]
       let A' = map (\ind -> let (k, j) = (ind / m, ind % m)
-                            in if v1 == 0.0 then unsafe A[k*m+j] else
-                            let x = unsafe (A[j] / v1) in
+                            in if v1 == 0.0 then #[unsafe] A[k*m+j] else
+                            let x = #[unsafe] (A[j] / v1) in
                                 if k < n-1  -- Ap case
-                                then unsafe ( A[(k+1)*m+j] - A[(k+1)*m+i] * x )
+                                then #[unsafe] ( A[(k+1)*m+j] - A[(k+1)*m+i] * x )
                                 else x      -- irow case
-                   ) (iota nm)
-      in  scatter A (iota nm) A'
+                   ) (iota (n*m))
+      in  scatter A (iota (n*m)) A'
 
   let mat_inv [n] (A: [n][n]f32): [n][n]f32 =
     let m = 2*n
-    let nm= n*m
     -- Pad the matrix with the identity matrix.
     let Ap = map (\ind -> let (i, j) = (ind / m, ind % m)
-                          in  if j < n then unsafe ( A[i,j] )
+                          in  if j < n then #[unsafe] ( A[i,j] )
                                        else if j == n+i
                                             then 1.0
                                             else 0.0
-                 ) (iota nm)
-    let Ap' = gauss_jordan n m Ap
+                 ) (iota (n*m))
+    let Ap' = gauss_jordan Ap
     -- Drop the identity matrix at the front!
-    in unsafe ( (unflatten n m Ap')[0:n,n:2*n] )
+    in #[unsafe] ( (unflatten Ap')[0:n,n:2*n] ) :> [n][n]f32
 --------------------------------------------------
 --------------------------------------------------
 
@@ -123,29 +122,31 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
   -- 1. make interpolation matrix --
   ----------------------------------
   let k2p2 = 2*k + 2
-  let k2p2' = if trend > 0 then k2p2 else k2p2-1
-  let X = intrinsics.opaque <|
+  let k2p2' = i64.i32 <| if trend > 0 then k2p2 else k2p2-1
+  let mappingindices = map i64.i32 mappingindices
+  let n = i64.i32 n
+  let X = opaque <|
           if trend > 0
               then mkX_with_trend k2p2' freq mappingindices
           else mkX_no_trend   k2p2' freq mappingindices
 
   -- PERFORMANCE BUG: instead of `let Xt = copy (transpose X)`
   --   we need to write the following ugly thing to force manifestation:
-  let zero = r32 <| (N*N + 2*N + 1) / (N + 1) - N - 1
+  let zero = r32 <| i32.i64 <| (N*N + 2*N + 1) / (N + 1) - N - 1
   let Xt  = map (map (+zero)) (copy (transpose X))
-            |> intrinsics.opaque
+            |> opaque
 
-  let BOUND = map (\q -> let t   = n+1+q
-                         let time = unsafe mappingindices[t-1]
-                         let tmp = logplus ((r32 time) / (r32 mappingindices[N-1]))
-                         in  lam * (f32.sqrt tmp)
-                  ) (iota (N-n))
+  --let BOUND = map (\q -> let t   = n+1+q
+  --                       let time = #[unsafe] mappingindices[t-1]
+  --                       let tmp = logplus ((r32 time) / (r32 mappingindices[N-1]))
+  --                       in  lam * (f32.sqrt tmp)
+  --                ) (iota (N-n))
 
   let Xh  =  (X[:,:n])
   let Xth =  (Xt[:n,:])
   in unzip <|
   map2 (\y ii -> if ii > 50000000 then (-1, 0.0f32) else
-      let yh  = unsafe y[:n]
+      let yh  = #[unsafe] y[:n]
       ----------------------------------
       -- 2. mat-mat multiplication    --
       ----------------------------------
@@ -170,9 +171,9 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
         loop (count, n', sigma0, yerr, keys) for i < N do
           let yi = y[i] in
           if f32.isnan yi then (count, n', sigma0, yerr, keys)
-          else let ye = yi - y_pred[i] in unsafe
+          else let ye = yi - y_pred[i] in #[unsafe]
                let yerr[count] = ye
-               let keys[count] = i
+               let keys[count] = i32.i64 i
                let (n'', sigma0') = if i<n then (n'+1, sigma0+ye*ye) else (n', sigma0)
                in  (count+1, n'', sigma0', yerr, keys)
       let sigma = f32.sqrt ( sigma0 / (r32 (n' - k2p2)) )
@@ -180,26 +181,26 @@ entry main [m][N] (trend: i32) (k: i32) (n: i32) (freq: f32)
       -- last kernel
       let MO_fst =
         loop (acc) = (0.0) for i < h do
-          acc + unsafe y_error[i+n'-h+1]
+          acc + #[unsafe] y_error[i+n'-h+1]
 
-      let (fst_break, mean, _) = 
+      let (fst_break, mean, _) =
         loop (fst_break, mean, mo) = (-1,0.0,0.0)
           for i < N'-n' do
-            let elm = if i==0 then MO_fst 
-                              else unsafe (-y_error[n'-h+i] + y_error[n'+i])
+            let elm = if i==0 then MO_fst
+                              else #[unsafe] (-y_error[n'-h+i] + y_error[n'+i])
             let mo = mo + elm
             let mo' = mo / (sigma * (f32.sqrt (r32 n')))
             let fst_break = if (fst_break == -1) && !(f32.isnan mo') &&
-                               ((f32.abs mo') > 1.0001f32 * b)
+                               ((f32.abs mo') > 1.0001f32 * 1f32)
                             then i else fst_break
             in  (fst_break, mean + mo', mo)
 
       let fst_break' = if fst_break == -1 then -1
-                       else let adj_break = adjustValInds n n' N' keys fst_break
+                       else let adj_break = adjustValInds (i32.i64 n) n' N' keys fst_break
                             in  ((adj_break-1) / 2) * 2 + 1  -- Cosmin's validation hack
       let fst_break' = if n' <=5 || N'-n' <= 5 then -2 else fst_break'
-          
-      in (fst_break', mean)      
+
+      in (fst_break', mean)
 
   ) images (iota m)
 
