@@ -158,12 +158,7 @@ entry main [m][N] (trend: i32) (k: i32) (n32: i32) (freq: f32)
           then mkX_with_trend k2p2' freq mappingindices
 	  else mkX_no_trend   k2p2' freq mappingindices
 
-
-  -- PERFORMANCE BUG: instead of `let Xt = copy (transpose X)`
-  --   we need to write the following ugly thing to force manifestation:
-  let zero = f32.i64 ((N*N + 2*N + 1) / (N + 1) - N - 1)
-  let Xt  = opaque <|
-            map (map (+zero)) (copy (transpose X))
+  let Xt  = opaque (copy (transpose X))
 
   let Xh  =  (X[:,:n])
   let Xth =  (Xt[:n,:])
